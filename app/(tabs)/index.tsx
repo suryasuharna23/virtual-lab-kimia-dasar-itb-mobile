@@ -1,98 +1,147 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const router = useRouter();
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  return (
+    <ThemedView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.body}>
+        <View style={styles.hero}>
+          <ThemedText type="title" style={styles.title}>
+            Virtual Lab Kimia Dasar
+          </ThemedText>
+          <ThemedText style={styles.lead}>
+            Praktikum digital dengan estetika laboratorium modern ITB: susun alat, pilih reagen,
+            dan ikuti skenario titrasi, redoks, serta gravimetri.
+          </ThemedText>
+          <View style={styles.actionRow}>
+            <Pressable style={styles.primary} onPress={() => router.push('/(tabs)/virtual-lab')}>
+              <ThemedText style={styles.primaryText}>Masuk ke workbench</ThemedText>
+            </Pressable>
+            <Pressable style={styles.secondary} onPress={() => router.push('/(tabs)/about-lab')}>
+              <ThemedText style={styles.secondaryText}>Panduan & tips</ThemedText>
+            </Pressable>
+          </View>
+        </View>
+
+        <View style={styles.cardGrid}>
+          <InfoCard
+            title="Visual alat nyata"
+            desc="Beaker, erlen, buret, dan batang pengaduk divisualkan dengan bentuk khasnya."
+            onPress={() => router.push('/(tabs)/virtual-lab')}
+          />
+          <InfoCard
+            title="Preset titrasi"
+            desc="Sekali tap untuk memuat setup titrasi, lalu drag untuk penyesuaian." 
+            onPress={() => router.push('/(tabs)/virtual-lab')}
+          />
+          <InfoCard
+            title="Keamanan terpandu"
+            desc="Hazard label warna-warni untuk korosif, oksidator, mudah terbakar, dan APD."
+            onPress={() => router.push('/(tabs)/virtual-lab')}
+          />
+        </View>
+      </ScrollView>
+    </ThemedView>
+  );
+}
+
+function InfoCard({ title, desc, onPress }: { title: string; desc: string; onPress: () => void }) {
+  return (
+    <Pressable style={styles.card} onPress={onPress}>
+      <ThemedText type="defaultSemiBold" style={styles.cardTitle}>
+        {title}
+      </ThemedText>
+      <ThemedText style={styles.cardDesc}>{desc}</ThemedText>
+      <ThemedText style={styles.cardLink}>Lihat detail</ThemedText>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+  },
+  body: {
+    padding: 20,
+    gap: 16,
+  },
+  hero: {
+    backgroundColor: '#0f172a',
+    borderRadius: 16,
+    padding: 16,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.35)',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#22d3ee',
+  },
+  lead: {
+    color: '#e2e8f0',
+  },
+  actionRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  primary: {
+    backgroundColor: '#14b8a6',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  primaryText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  secondary: {
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.6)',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: '#0f172a',
+  },
+  secondaryText: {
+    fontWeight: '700',
+    color: '#e2e8f0',
+  },
+  cardGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  card: {
+    flexBasis: '48%',
+    backgroundColor: '#ffffff',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.08)',
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 2,
+    gap: 6,
+  },
+  cardTitle: {
+    fontSize: 16,
+    color: '#0f172a',
+  },
+  cardDesc: {
+    color: 'rgba(15, 23, 42, 0.7)',
+  },
+  cardLink: {
+    color: '#0ea5e9',
+    fontWeight: '700',
+    marginTop: 4,
   },
 });
