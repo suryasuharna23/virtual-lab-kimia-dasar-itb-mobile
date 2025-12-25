@@ -9,4 +9,5 @@ export * from './UserHeader'
 export * from './StreakCard'
 export * from './CourseCard'
 export * from './ProgressCard'
+export * from './AttendanceCard'
 

@@ -14,15 +14,27 @@ import { useAuth } from '@/contexts/AuthContext'
 import { 
   Text, 
   UserHeader, 
-  ProgressCard, 
+  AttendanceCard,
   CourseCard,
   Card
 } from '@/components/ui'
+import type { PraktikumSession } from '@/components/ui/AttendanceCard'
 import { layout, spacing, colors } from '@/constants/theme'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { api } from '@/lib/api'
 import { endpoints } from '@/constants/api'
 import { Module, Student } from '@/types'
+
+// Dummy attendance data for simulation
+const DUMMY_SESSIONS: PraktikumSession[] = [
+  { id: '1', moduleNumber: 1, moduleName: 'Pengenalan Lab', date: '2025-02-10', attended: true },
+  { id: '2', moduleNumber: 2, moduleName: 'Titrasi Asam Basa', date: '2025-02-17', attended: true },
+  { id: '3', moduleNumber: 3, moduleName: 'Reaksi Redoks', date: '2025-02-24', attended: true },
+  { id: '4', moduleNumber: 4, moduleName: 'Termokimia', date: '2025-03-03', attended: false },
+  { id: '5', moduleNumber: 5, moduleName: 'Laju Reaksi', date: '2025-03-10', attended: false },
+  { id: '6', moduleNumber: 6, moduleName: 'Larutan Koloid', date: '2025-03-17', attended: false },
+  { id: '7', moduleNumber: 7, moduleName: 'Analisis Kualitatif', date: '2025-03-24', attended: false },
+]
 
 export default function HomeScreen() {
   const { theme } = useTheme()
@@ -30,7 +42,7 @@ export default function HomeScreen() {
   const router = useRouter()
   const [refreshing, setRefreshing] = useState(false)
   const [modules, setModules] = useState<Module[]>([])
-  const [completedModules, setCompletedModules] = useState(0) // TODO: Track from real progress
+  const [sessions, setSessions] = useState<PraktikumSession[]>(DUMMY_SESSIONS)
 
   const student = user as Student | null
 
@@ -48,6 +60,7 @@ export default function HomeScreen() {
   const fetchData = useCallback(async () => {
     setRefreshing(true)
     await fetchModules()
+    // TODO: Fetch real attendance data from API
     setRefreshing(false)
   }, [fetchModules])
 
@@ -64,10 +77,11 @@ export default function HomeScreen() {
     return student.full_name?.split(' ')[0] || 'Mahasiswa'
   }
 
-  const getProgressLevel = () => {
-    const totalModules = modules.length
-    if (totalModules === 0) return 'Pemula'
-    const percentage = (completedModules / totalModules) * 100
+  const getAttendanceLevel = () => {
+    const attended = sessions.filter(s => s.attended).length
+    const total = sessions.length
+    if (total === 0) return 'Pemula'
+    const percentage = (attended / total) * 100
     if (percentage === 100) return 'Master'
     if (percentage >= 75) return 'Mahir'
     if (percentage >= 50) return 'Menengah'
@@ -105,10 +119,10 @@ export default function HomeScreen() {
           
           <UserHeader 
             name={getUserDisplayName()} 
-            level={getProgressLevel()}
+            level={getAttendanceLevel()}
             avatarUrl={student?.avatar_url}
             onNotificationPress={() => Alert.alert('Notifikasi', 'Tidak ada notifikasi baru')}
-            onGiftPress={() => router.push('/praktikum' as any)}
+            onGiftPress={() => router.push('/nametag' as any)}
           />
 
           <View style={{ marginBottom: spacing.xl }}>
@@ -121,10 +135,9 @@ export default function HomeScreen() {
           </View>
 
           <Animated.View entering={FadeInDown.delay(100).springify()}>
-            <ProgressCard 
-              totalModules={modules.length}
-              completedModules={completedModules}
-              onContinuePress={() => router.push('/praktikum' as any)}
+            <AttendanceCard 
+              sessions={sessions}
+              onShowNametagPress={() => router.push('/nametag' as any)}
               style={{ marginBottom: spacing.xl }}
             />
           </Animated.View>
@@ -190,13 +203,13 @@ export default function HomeScreen() {
             </Text>
             <View style={{ flexDirection: 'row', gap: spacing.md }}>
                 <Card 
-                  onPress={() => router.push('/virtual-lab' as any)}
+                  onPress={() => router.push('/nametag' as any)}
                   style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: 120 }}
                 >
-                    <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: theme.accentSoft, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm }}>
-                       <Ionicons name="flask" size={28} color={colors.accent} />
+                    <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: colors.successSoft, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm }}>
+                       <Ionicons name="qr-code" size={28} color={colors.success} />
                     </View>
-                    <Text weight="bold">Virtual Lab</Text>
+                    <Text weight="bold">Nametag</Text>
                 </Card>
                 <Card 
                   onPress={() => router.push('/pengumuman' as any)}
