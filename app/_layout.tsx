@@ -1,31 +1,47 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
-import { View } from 'react-native';
-import 'react-native-reanimated';
+import { Stack } from 'expo-router'
+import { StatusBar } from 'expo-status-bar'
+import { useState } from 'react'
+import { View } from 'react-native'
+import Toast from 'react-native-toast-message'
+import 'react-native-reanimated'
 
-import { SplashOverlay } from '@/components/splash-overlay';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { SplashOverlay } from '@/components/splash-overlay'
+import { ThemeProvider, AuthProvider, AppProvider, useTheme } from '@/contexts'
 
 export const unstable_settings = {
   anchor: '(tabs)',
-};
+}
 
-export default function RootLayout() {
-  const [showSplash, setShowSplash] = useState(true);
-  const colorScheme = useColorScheme();
+function RootLayoutContent() {
+  const [showSplash, setShowSplash] = useState(true)
+  const { isDark } = useTheme()
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <View style={{ flex: 1 }}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-        </Stack>
-        <StatusBar style="auto" />
-        {showSplash && <SplashOverlay onFinish={() => setShowSplash(false)} />}
-      </View>
+    <View style={{ flex: 1 }}>
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="pengumuman/[id]" options={{ title: 'Pengumuman' }} />
+        <Stack.Screen name="about" options={{ title: 'Tentang' }} />
+        <Stack.Screen name="faq" options={{ title: 'FAQ' }} />
+        <Stack.Screen name="kontak" options={{ title: 'Kontak' }} />
+        <Stack.Screen name="search" options={{ title: 'Pencarian' }} />
+        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+      </Stack>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <Toast />
+      {showSplash && <SplashOverlay onFinish={() => setShowSplash(false)} />}
+    </View>
+  )
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <AuthProvider>
+        <AppProvider>
+          <RootLayoutContent />
+        </AppProvider>
+      </AuthProvider>
     </ThemeProvider>
-  );
+  )
 }

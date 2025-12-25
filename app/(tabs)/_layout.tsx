@@ -1,35 +1,108 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
-
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Tabs } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
+import { useTheme } from '@/contexts/ThemeContext'
+import { HapticTab } from '@/components/haptic-tab'
+import { Platform, View } from 'react-native'
+import { shadows } from '@/constants/theme'
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const { theme } = useTheme()
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
+        tabBarActiveTintColor: theme.primary,
+        tabBarInactiveTintColor: theme.textMuted,
+        tabBarStyle: {
+          backgroundColor: theme.surface,
+          borderTopWidth: 0,
+          borderRadius: 24,
+          marginHorizontal: 16,
+          marginBottom: Platform.OS === 'ios' ? 24 : 16,
+          position: 'absolute',
+          height: 64,
+          paddingBottom: 0,
+          paddingTop: 0,
+          ...shadows.lg,
+          borderBottomWidth: 4,
+          borderBottomColor: theme.border,
+          borderLeftWidth: 1,
+          borderLeftColor: theme.border,
+          borderRightWidth: 1,
+          borderRightColor: theme.border,
+        },
+        tabBarItemStyle: {
+          paddingVertical: 10,
+        },
         tabBarButton: HapticTab,
-      }}>
+        headerShown: false,
+        tabBarShowLabel: false, // Hide labels for cleaner look like Duolingo
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: 'Beranda',
+          tabBarIcon: ({ color, focused }) => (
+            <View style={{ alignItems: 'center' }}>
+              <Ionicons name={focused ? 'home' : 'home-outline'} size={28} color={color} />
+              {focused && <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: color, marginTop: 4 }} />}
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="praktikum"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Praktikum',
+          tabBarIcon: ({ color, focused }) => (
+             <View style={{ alignItems: 'center' }}>
+              <Ionicons name={focused ? 'book' : 'book-outline'} size={28} color={color} />
+              {focused && <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: color, marginTop: 4 }} />}
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="virtual-lab"
+        options={{
+          title: 'Lab Virtual',
+          tabBarIcon: ({ color, focused }) => (
+             <View style={{ alignItems: 'center' }}>
+              <Ionicons name={focused ? 'flask' : 'flask-outline'} size={28} color={color} />
+              {focused && <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: color, marginTop: 4 }} />}
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="pengumuman"
+        options={{
+          title: 'Pengumuman',
+          tabBarIcon: ({ color, focused }) => (
+             <View style={{ alignItems: 'center' }}>
+              <Ionicons name={focused ? 'megaphone' : 'megaphone-outline'} size={28} color={color} />
+              {focused && <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: color, marginTop: 4 }} />}
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="more"
+        options={{
+          title: 'Lainnya',
+          tabBarIcon: ({ color, focused }) => (
+             <View style={{ alignItems: 'center' }}>
+              <Ionicons
+                name={focused ? 'ellipsis-horizontal' : 'ellipsis-horizontal-outline'}
+                size={28}
+                color={color}
+              />
+              {focused && <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: color, marginTop: 4 }} />}
+            </View>
+          ),
         }}
       />
     </Tabs>
-  );
+  )
 }
