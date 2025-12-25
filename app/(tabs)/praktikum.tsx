@@ -10,9 +10,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { Paths, File } from 'expo-file-system'
-import * as Sharing from 'expo-sharing'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useFocusEffect } from 'expo-router'
+import { useFocusEffect, useRouter } from 'expo-router'
 import {
   Text,
   Card,
@@ -39,6 +38,7 @@ interface OfflineFile {
 
 export default function PraktikumScreen() {
   const { theme } = useTheme()
+  const router = useRouter()
   const [modules, setModules] = useState<Module[]>([])
   const [groups, setGroups] = useState<Group[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -112,7 +112,19 @@ export default function PraktikumScreen() {
             Alert.alert('File Tidak Ditemukan', 'File telah dihapus. Silakan unduh ulang.')
             return
           }
-          await Sharing.shareAsync(offlineFile.localPath)
+          const response = await api.get<{ download_url: string; expires_at: string }>(
+            endpoints.modules.download(module.id)
+          )
+          if (response.success && response.data?.download_url) {
+            router.push({
+              pathname: '/pdf-viewer',
+              params: { 
+                uri: response.data.download_url, 
+                title: module.title,
+                localPath: offlineFile.localPath 
+              }
+            } as any)
+          }
         } catch (error) {
           const updatedFiles = offlineFiles.filter(f => f.id !== String(module.id))
           await AsyncStorage.setItem(OFFLINE_FILES_KEY, JSON.stringify(updatedFiles))
@@ -167,7 +179,14 @@ export default function PraktikumScreen() {
           { text: 'OK' },
           { 
             text: 'Buka File', 
-            onPress: () => Sharing.shareAsync(file.uri)
+            onPress: () => router.push({
+              pathname: '/pdf-viewer',
+              params: { 
+                uri: downloadUrl, 
+                title: module.title,
+                localPath: file.uri 
+              }
+            } as any)
           }
         ]
       )
@@ -196,7 +215,19 @@ export default function PraktikumScreen() {
             Alert.alert('File Tidak Ditemukan', 'File telah dihapus. Silakan unduh ulang.')
             return
           }
-          await Sharing.shareAsync(offlineFile.localPath)
+          const response = await api.get<{ download_url: string; expires_at: string }>(
+            endpoints.groups.download(group.id)
+          )
+          if (response.success && response.data?.download_url) {
+            router.push({
+              pathname: '/pdf-viewer',
+              params: { 
+                uri: response.data.download_url, 
+                title: group.name,
+                localPath: offlineFile.localPath 
+              }
+            } as any)
+          }
         } catch (error) {
           const updatedFiles = offlineFiles.filter(f => f.id !== `group_${group.id}`)
           await AsyncStorage.setItem(OFFLINE_FILES_KEY, JSON.stringify(updatedFiles))
@@ -254,7 +285,17 @@ export default function PraktikumScreen() {
         `${group.name} berhasil diunduh dan tersimpan offline.`,
         [
           { text: 'OK' },
-          { text: 'Buka File', onPress: () => Sharing.shareAsync(file.uri) }
+          { 
+            text: 'Buka File', 
+            onPress: () => router.push({
+              pathname: '/pdf-viewer',
+              params: { 
+                uri: downloadUrl, 
+                title: group.name,
+                localPath: file.uri 
+              }
+            } as any)
+          }
         ]
       )
     } catch (error) {

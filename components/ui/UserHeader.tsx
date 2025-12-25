@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { View, Image, TouchableOpacity, Alert } from 'react-native'
 import { Text } from './Text'
 import { Badge } from './Badge'
@@ -20,6 +20,8 @@ export function UserHeader({
   onNotificationPress,
 }: UserHeaderProps) {
   const { theme } = useTheme()
+  const [imageLoading, setImageLoading] = useState(true)
+  const [imageError, setImageError] = useState(false)
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg }}>
@@ -28,7 +30,7 @@ export function UserHeader({
           width: 48, 
           height: 48, 
           borderRadius: borderRadius.full, 
-          backgroundColor: colors.white,
+          backgroundColor: theme.surface,
           borderWidth: 2,
           borderColor: theme.border,
           marginRight: spacing.md,
@@ -36,13 +38,26 @@ export function UserHeader({
           alignItems: 'center',
           justifyContent: 'center'
         }}>
-          {avatarUrl ? (
-            <Image 
-              source={{ uri: avatarUrl }} 
-              style={{ width: '100%', height: '100%' }}
-            />
-          ) : (
-             <Ionicons name="person" size={24} color={theme.textMuted} />
+          <Ionicons name="person" size={24} color={theme.textMuted} />
+          {avatarUrl && !imageError && (
+            <View style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              backgroundColor: imageLoading ? 'transparent' : theme.surface,
+            }}>
+              <Image 
+                source={{ uri: avatarUrl }} 
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  opacity: imageLoading ? 0 : 1
+                }}
+                onLoadStart={() => setImageLoading(true)}
+                onLoadEnd={() => setImageLoading(false)}
+                onError={() => { setImageError(true); setImageLoading(false) }}
+              />
+            </View>
           )}
         </View>
 

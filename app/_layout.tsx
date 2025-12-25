@@ -2,6 +2,7 @@ import { Stack, useRouter, useSegments } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { useState, useEffect } from 'react'
 import { View, ActivityIndicator } from 'react-native'
+import Animated, { useAnimatedStyle } from 'react-native-reanimated'
 import Toast from 'react-native-toast-message'
 import 'react-native-reanimated'
 
@@ -43,10 +44,15 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 
 function RootLayoutContent() {
   const [showSplash, setShowSplash] = useState(true)
-  const { isDark, theme } = useTheme()
+  const { isDark, theme, animatedBackground } = useTheme()
+
+  const animatedContainerStyle = useAnimatedStyle(() => ({
+    flex: 1,
+    backgroundColor: animatedBackground.value,
+  }))
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.background }}>
+    <Animated.View style={animatedContainerStyle}>
       <AuthGuard>
         <Stack
           screenOptions={{
@@ -66,13 +72,14 @@ function RootLayoutContent() {
           <Stack.Screen name="faq" options={{ headerShown: false }} />
           <Stack.Screen name="kontak" options={{ headerShown: false }} />
           <Stack.Screen name="search" options={{ title: 'Pencarian' }} />
+          <Stack.Screen name="pdf-viewer" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
         </Stack>
       </AuthGuard>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <Toast />
       {showSplash && <SplashOverlay onFinish={() => setShowSplash(false)} />}
-    </View>
+    </Animated.View>
   )
 }
 
