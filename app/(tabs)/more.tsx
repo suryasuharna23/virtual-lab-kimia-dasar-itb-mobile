@@ -5,6 +5,8 @@ import {
   StyleSheet,
   Switch,
   Alert,
+  Image,
+  TouchableOpacity,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -15,11 +17,14 @@ import { layout, spacing, borderRadius, colors } from '@/constants/theme'
 import Constants from 'expo-constants'
 import { useRouter } from 'expo-router'
 import * as Haptics from 'expo-haptics'
+import { Student } from '@/types'
 
 export default function MoreScreen() {
   const { theme, isDark, toggleTheme } = useTheme()
   const { user, logout, isAuthenticated } = useAuth()
   const router = useRouter()
+
+  const student = user as Student | null
 
   const handleToggleTheme = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
@@ -110,35 +115,56 @@ export default function MoreScreen() {
           </Text>
         </View>
 
-        {isAuthenticated && user && (
-          <Card
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginBottom: spacing.xl,
-              backgroundColor: theme.primarySoft,
-            }}
+        {isAuthenticated && student && (
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => handleNavigation('/profile')}
           >
-            <View style={[styles.avatar, { backgroundColor: theme.primary }]}>
-               <Ionicons name="person" size={28} color={colors.white} />
-            </View>
-            <View style={styles.profileInfo}>
-              <Text variant="h3" style={{ color: theme.textPrimary }}>
-                {user.full_name || 'Mahasiswa'}
-              </Text>
-              <Text variant="body" style={{ color: theme.textSecondary }}>
-                {user.email}
-              </Text>
-            </View>
-            <Badge variant="success" size="sm">
-              Active
-            </Badge>
-          </Card>
+            <Card
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginBottom: spacing.xl,
+                backgroundColor: theme.primarySoft,
+              }}
+            >
+              <View style={[styles.avatar, { backgroundColor: theme.primary, overflow: 'hidden' }]}>
+                {student.avatar_url ? (
+                  <Image
+                    source={{ uri: student.avatar_url }}
+                    style={{ width: '100%', height: '100%' }}
+                  />
+                ) : (
+                  <Ionicons name="person" size={28} color={colors.white} />
+                )}
+              </View>
+              <View style={styles.profileInfo}>
+                <Text variant="h3" style={{ color: theme.textPrimary }}>
+                  {student.full_name || 'Mahasiswa'}
+                </Text>
+                <Text variant="body" style={{ color: theme.textSecondary }}>
+                  {student.email}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
+            </Card>
+          </TouchableOpacity>
         )}
 
         <Text variant="overline" style={[styles.sectionTitle, { color: theme.textMuted }]}>
           Pengaturan
         </Text>
+
+        {isAuthenticated && (
+          <MenuItem
+            icon="person-circle"
+            label="Edit Profil"
+            desc="Ubah nama, foto, dan info lainnya"
+            onPress={() => handleNavigation('/profile')}
+            iconBgColor={theme.primarySoft}
+            iconColor={theme.primary}
+          />
+        )}
 
         <MenuItem
           icon={isDark ? 'moon' : 'sunny'}

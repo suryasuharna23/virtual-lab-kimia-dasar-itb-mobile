@@ -12,6 +12,7 @@ export const endpoints = {
     studentRegister: '/api/auth/student/register',
     studentLogin: '/api/auth/student/login',
     studentMe: '/api/auth/student/me',
+    studentProfile: '/api/auth/student/profile',
   },
 
   // Public content

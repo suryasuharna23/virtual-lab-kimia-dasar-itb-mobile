@@ -20,6 +20,7 @@ export interface Student {
   nim?: string
   cohort?: string
   faculty?: string
+  avatar_url?: string
 }
 
 export interface LoginRequest {

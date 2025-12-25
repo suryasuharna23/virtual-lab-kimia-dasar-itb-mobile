@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   View,
   StyleSheet,
@@ -17,6 +17,19 @@ import { Text, Input, Button, Card } from '@/components/ui'
 import { spacing, layout, borderRadius, colors } from '@/constants/theme'
 import { StudentRegisterRequest } from '@/types'
 import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated'
+
+interface PasswordRequirement {
+  label: string
+  test: (password: string) => boolean
+}
+
+const PASSWORD_REQUIREMENTS: PasswordRequirement[] = [
+  { label: 'Minimal 8 karakter', test: (p) => p.length >= 8 },
+  { label: 'Huruf kecil (a-z)', test: (p) => /[a-z]/.test(p) },
+  { label: 'Huruf besar (A-Z)', test: (p) => /[A-Z]/.test(p) },
+  { label: 'Angka (0-9)', test: (p) => /[0-9]/.test(p) },
+  { label: 'Simbol (!@#$%^&*)', test: (p) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(p) },
+]
 
 export default function RegisterScreen() {
   const router = useRouter()
@@ -37,6 +50,18 @@ export default function RegisterScreen() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Partial<keyof typeof formData | string> | any>({})
+  const [showPasswordHints, setShowPasswordHints] = useState(false)
+
+  const passwordValidation = useMemo(() => {
+    return PASSWORD_REQUIREMENTS.map((req) => ({
+      ...req,
+      passed: req.test(formData.password),
+    }))
+  }, [formData.password])
+
+  const allPasswordRequirementsMet = useMemo(() => {
+    return passwordValidation.every((req) => req.passed)
+  }, [passwordValidation])
 
   const handleChange = (key: keyof typeof formData, value: string) => {
     setFormData((prev: StudentRegisterRequest & { confirmPassword: string }) => ({ ...prev, [key]: value }))
@@ -65,8 +90,8 @@ export default function RegisterScreen() {
     if (!formData.password) {
       newErrors.password = 'Password wajib diisi'
       isValid = false
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password minimal 6 karakter'
+    } else if (!allPasswordRequirementsMet) {
+      newErrors.password = 'Password belum memenuhi semua persyaratan'
       isValid = false
     }
 
@@ -84,7 +109,6 @@ export default function RegisterScreen() {
 
     setLoading(true)
     try {
-      // Remove confirmPassword from the request data
       const { confirmPassword, ...registerData } = formData
       
       await register(registerData)
@@ -112,6 +136,25 @@ export default function RegisterScreen() {
   const navigateToLogin = () => {
     router.back()
   }
+
+  const PasswordRequirementItem = ({ label, passed }: { label: string; passed: boolean }) => (
+    <View style={styles.requirementRow}>
+      <Ionicons
+        name={passed ? 'checkmark-circle' : 'ellipse-outline'}
+        size={16}
+        color={passed ? colors.success : theme.textMuted}
+      />
+      <Text
+        variant="caption"
+        style={{
+          marginLeft: spacing.xs,
+          color: passed ? colors.success : theme.textMuted,
+        }}
+      >
+        {label}
+      </Text>
+    </View>
+  )
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -205,11 +248,12 @@ export default function RegisterScreen() {
                 <View style={{ marginTop: spacing.md }}>
                 <Input
                     label="Password"
-                    placeholder="Minimal 6 karakter"
+                    placeholder="Buat password yang kuat"
                     value={formData.password}
                     onChangeText={(text) => handleChange('password', text)}
                     error={errors.password}
                     secureTextEntry={!showPassword}
+                    onFocus={() => setShowPasswordHints(true)}
                     leftIcon={<Ionicons name="lock-closed-outline" size={20} color={theme.textMuted} />}
                     rightIcon={
                     <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
@@ -221,6 +265,14 @@ export default function RegisterScreen() {
                     </TouchableOpacity>
                     }
                 />
+                
+                {showPasswordHints && formData.password.length > 0 && (
+                  <View style={[styles.passwordHints, { backgroundColor: theme.surfacePurple }]}>
+                    {passwordValidation.map((req, index) => (
+                      <PasswordRequirementItem key={index} label={req.label} passed={req.passed} />
+                    ))}
+                  </View>
+                )}
                 </View>
 
                 <View style={{ marginTop: spacing.md }}>
@@ -322,5 +374,15 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  passwordHints: {
+    marginTop: spacing.sm,
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+    gap: spacing.xs,
+  },
+  requirementRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 })

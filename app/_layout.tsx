@@ -59,6 +59,7 @@ function RootLayoutContent() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="auth" options={{ headerShown: false }} />
           <Stack.Screen name="pengumuman/[id]" options={{ title: 'Pengumuman' }} />
+          <Stack.Screen name="profile" options={{ title: 'Edit Profil' }} />
           <Stack.Screen name="about" options={{ title: 'Tentang' }} />
           <Stack.Screen name="faq" options={{ title: 'FAQ' }} />
           <Stack.Screen name="kontak" options={{ title: 'Kontak' }} />
