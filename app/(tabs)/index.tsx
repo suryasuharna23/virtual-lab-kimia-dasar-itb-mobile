@@ -25,7 +25,6 @@ import { api } from '@/lib/api'
 import { endpoints } from '@/constants/api'
 import { Module, Student } from '@/types'
 
-// Dummy attendance data for simulation
 const DUMMY_SESSIONS: PraktikumSession[] = [
   { id: '1', moduleNumber: 1, moduleName: 'Pengenalan Lab', date: '2025-02-10', attended: true },
   { id: '2', moduleNumber: 2, moduleName: 'Titrasi Asam Basa', date: '2025-02-17', attended: true },
@@ -60,7 +59,6 @@ export default function HomeScreen() {
   const fetchData = useCallback(async () => {
     setRefreshing(true)
     await fetchModules()
-    // TODO: Fetch real attendance data from API
     setRefreshing(false)
   }, [fetchModules])
 

@@ -20,14 +20,12 @@ export default function VirtualLabScreen() {
   const float = useSharedValue(0)
 
   useEffect(() => {
-    // Rotation for bubbles or decoration
     rotation.value = withRepeat(
         withTiming(10, { duration: 2000, easing: Easing.inOut(Easing.ease) }), 
         -1, 
         true
     )
     
-    // Floating effect for the main icon
     float.value = withRepeat(
         withTiming(10, { duration: 1500, easing: Easing.inOut(Easing.quad) }),
         -1,
@@ -46,7 +44,6 @@ export default function VirtualLabScreen() {
             <View style={[styles.iconCircle, { backgroundColor: theme.primarySoft }]}>
                 <Ionicons name="flask" size={80} color={theme.primary} />
             </View>
-            {/* Decorative bubbles */}
             <View style={[styles.bubble, { top: 0, right: 10, backgroundColor: theme.accent }]} />
             <View style={[styles.bubble, { top: 20, left: 0, backgroundColor: theme.accent, width: 12, height: 12 }]} />
         </Animated.View>

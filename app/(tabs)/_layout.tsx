@@ -36,7 +36,7 @@ export default function TabLayout() {
         },
         tabBarButton: HapticTab,
         headerShown: false,
-        tabBarShowLabel: false, // Hide labels for cleaner look like Duolingo
+        tabBarShowLabel: false,
       }}
     >
       <Tabs.Screen
