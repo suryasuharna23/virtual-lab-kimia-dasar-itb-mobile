@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { StyleSheet, View, Pressable } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
@@ -7,13 +7,7 @@ import QRCode from 'react-native-qrcode-svg'
 import * as Haptics from 'expo-haptics'
 import Animated, { 
   FadeInDown, 
-  FadeIn,
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  withSequence,
-  Easing
+  FadeIn
 } from 'react-native-reanimated'
 import { Text, Button, Badge, Card } from '@/components/ui'
 import { useTheme } from '@/contexts/ThemeContext'
@@ -29,24 +23,6 @@ export default function NametagScreen() {
   
   const [isScanning, setIsScanning] = useState(false)
   const [scanResult, setScanResult] = useState<'success' | 'error' | null>(null)
-  
-  // Pulse animation for QR code border
-  const pulse = useSharedValue(1)
-  
-  useEffect(() => {
-    pulse.value = withRepeat(
-      withSequence(
-        withTiming(1.05, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) })
-      ),
-      -1,
-      true
-    )
-  }, [])
-  
-  const pulseStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulse.value }]
-  }))
 
   // Generate QR code data
   const qrData = JSON.stringify({
@@ -151,8 +127,7 @@ export default function NametagScreen() {
               </View>
             </View>
 
-            {/* QR Code */}
-            <Animated.View style={[styles.qrContainer, pulseStyle]}>
+            <View style={styles.qrContainer}>
               <View style={[styles.qrWrapper, { borderColor: colors.primary }]}>
                 <QRCode
                   value={qrData}
@@ -164,7 +139,7 @@ export default function NametagScreen() {
               <Text variant="caption" style={{ color: theme.textMuted, marginTop: spacing.sm, textAlign: 'center' }}>
                 Scan QR ini di mesin absen
               </Text>
-            </Animated.View>
+            </View>
           </Card>
         </Animated.View>
 

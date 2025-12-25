@@ -1,8 +1,8 @@
 import { Image } from 'expo-image';
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { StyleSheet, View, Dimensions, Text, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Audio } from 'expo-av';
+import { useAudioPlayer } from 'expo-audio';
 import * as Haptics from 'expo-haptics';
 import Animated, { 
   useSharedValue, 
@@ -40,7 +40,6 @@ const themeColors = {
     },
     title: colors.primary,
     subtitle: '#6B7280',
-    dots: colors.primary,
   },
   dark: {
     gradient: ['#1E1B4B', '#2D2A5B', '#3D3A6B'] as const,
@@ -53,7 +52,6 @@ const themeColors = {
     },
     title: '#F5F3FF',
     subtitle: '#A5B4FC',
-    dots: '#C4B5FD',
   },
 };
 
@@ -169,30 +167,13 @@ const Bubble = ({ id, size, color, x, y, delay, onPop }: BubbleProps) => {
   );
 };
 
-// Sound utility
-const playPopSound = async (soundRef: React.MutableRefObject<Audio.Sound | null>) => {
-  try {
-    if (soundRef.current) {
-      await soundRef.current.replayAsync();
-    } else {
-      const { sound } = await Audio.Sound.createAsync(
-        require('@/assets/sounds/pop.mp3'),
-        { volume: 0.5 }
-      );
-      soundRef.current = sound;
-      await sound.playAsync();
-    }
-  } catch (error) {
-    // Silently fail - sound is optional enhancement
-    console.log('Sound playback failed:', error);
-  }
-};
-
 export function SplashOverlay({ onFinish }: Props) {
   const { isDark } = useTheme();
   const currentTheme = isDark ? themeColors.dark : themeColors.light;
-  const soundRef = useRef<Audio.Sound | null>(null);
   const [logoAnimationComplete, setLogoAnimationComplete] = useState(false);
+  
+  // Use new expo-audio API
+  const popSound = useAudioPlayer(require('@/assets/sounds/pop.mp3'));
   
   // Track popped bubbles
   const [poppedBubbles, setPoppedBubbles] = useState<Set<number>>(new Set());
@@ -206,21 +187,22 @@ export function SplashOverlay({ onFinish }: Props) {
     { id: 5, size: 70, x: width * 0.1, y: height * 0.5, delay: 800 },
   ];
 
+  const playPopSound = useCallback(() => {
+    try {
+      popSound.seekTo(0);
+      popSound.play();
+    } catch (error) {
+      // Silently fail - sound is optional
+      console.log('Sound playback failed:', error);
+    }
+  }, [popSound]);
+
   // Play sound when logo animation completes
   useEffect(() => {
     if (logoAnimationComplete) {
-      playPopSound(soundRef);
+      playPopSound();
     }
-  }, [logoAnimationComplete]);
-
-  // Cleanup sound on unmount
-  useEffect(() => {
-    return () => {
-      if (soundRef.current) {
-        soundRef.current.unloadAsync();
-      }
-    };
-  }, []);
+  }, [logoAnimationComplete, playPopSound]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -233,9 +215,9 @@ export function SplashOverlay({ onFinish }: Props) {
   }, [onFinish]);
 
   const handleBubblePop = useCallback((id: number) => {
-    playPopSound(soundRef);
+    playPopSound();
     setPoppedBubbles(prev => new Set(prev).add(id));
-  }, []);
+  }, [playPopSound]);
 
   const activeBubbles = initialBubbles.filter(b => !poppedBubbles.has(b.id));
 
@@ -322,8 +304,6 @@ export function SplashOverlay({ onFinish }: Props) {
               Institut Teknologi Bandung
             </Text>
           </Animated.View>
-
-
         </View>
       </LinearGradient>
     </View>
@@ -366,5 +346,4 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
   },
-
 });
