@@ -18,7 +18,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { api } from '@/lib/api'
 import { endpoints } from '@/constants/api'
 import type { Announcement } from '@/types'
-import { layout, spacing, colors } from '@/constants/theme'
+import { layout, spacing, colors, shadows } from '@/constants/theme'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { useRouter } from 'expo-router'
 
@@ -102,9 +102,10 @@ export default function PengumumanScreen() {
   const renderItem = ({ item, index }: { item: Announcement; index: number }) => (
     <Animated.View entering={FadeInDown.delay(index * 100).springify()}>
       <Card 
-        style={styles.card}
-        variant="interactive"
-        colorScheme={item.is_important ? 'warning' : 'neutral'}
+        style={{
+            ...styles.card,
+            ...(item.is_important ? { borderColor: colors.warning, borderWidth: 1 } : {})
+        }}
         onPress={() => router.push(`/pengumuman?id=${item.id}` as any)}
       >
         <View style={styles.cardHeader}>
@@ -116,7 +117,7 @@ export default function PengumumanScreen() {
                 </Text>
             </View>
             {item.is_important && (
-              <Badge variant="error" size="sm" style={{ marginLeft: spacing.sm }}>
+              <Badge variant="warning" size="sm" style={{ marginLeft: spacing.sm }}>
                 PENTING
               </Badge>
             )}
@@ -241,6 +242,7 @@ const styles = StyleSheet.create({
   },
   card: {
     marginBottom: spacing.md,
+    ...shadows.sm,
   },
   cardHeader: {
     marginBottom: spacing.xs,

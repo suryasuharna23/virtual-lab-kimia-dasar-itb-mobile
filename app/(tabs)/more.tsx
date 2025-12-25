@@ -4,13 +4,12 @@ import {
   ScrollView,
   StyleSheet,
   Switch,
-  TouchableOpacity,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { Text, Badge } from '@/components/ui'
+import { Text, Badge, Card } from '@/components/ui'
 import { useTheme } from '@/contexts/ThemeContext'
-import { layout, spacing, borderRadius, colors, shadows } from '@/constants/theme'
+import { layout, spacing, borderRadius, colors } from '@/constants/theme'
 import Constants from 'expo-constants'
 import { useRouter } from 'expo-router'
 import * as Haptics from 'expo-haptics'
@@ -41,19 +40,17 @@ export default function MoreScreen() {
     iconBgColor: string
     iconColor: string
   }) => (
-    <TouchableOpacity
+    <Card
       onPress={() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
         onPress()
       }}
-      activeOpacity={0.7}
-      style={[
-        styles.menuItem,
-        {
-          backgroundColor: theme.surface,
-          borderColor: theme.border,
-        },
-      ]}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: spacing.md,
+        padding: spacing.md,
+      }}
     >
       <View style={[styles.iconContainer, { backgroundColor: iconBgColor }]}>
         <Ionicons name={icon} size={22} color={iconColor} />
@@ -71,7 +68,7 @@ export default function MoreScreen() {
       {rightElement || (
         <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
       )}
-    </TouchableOpacity>
+    </Card>
   )
 
   const handleNavigation = (path: string) => {
@@ -99,17 +96,16 @@ export default function MoreScreen() {
         </View>
 
         {/* Profile Card */}
-        <View
-          style={[
-            styles.profileCard,
-            {
-              backgroundColor: theme.primarySoft,
-              borderColor: theme.primary,
-            },
-          ]}
+        <Card
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: spacing.xl,
+            backgroundColor: theme.primarySoft,
+          }}
         >
           <View style={[styles.avatar, { backgroundColor: theme.primary }]}>
-            <Ionicons name="flask" size={32} color={colors.white} />
+             <Ionicons name="flask" size={32} color={colors.white} />
           </View>
           <View style={styles.profileInfo}>
             <Text variant="h3" style={{ color: theme.textPrimary }}>
@@ -122,19 +118,10 @@ export default function MoreScreen() {
           <Badge variant="warning" size="sm">
             2025
           </Badge>
-        </View>
+        </Card>
 
         {/* Settings Section */}
-        <Text
-          variant="overline"
-          style={{
-            color: theme.textMuted,
-            marginBottom: spacing.md,
-            marginTop: spacing.lg,
-            textTransform: 'uppercase',
-            letterSpacing: 1,
-          }}
-        >
+        <Text variant="overline" style={[styles.sectionTitle, { color: theme.textMuted }]}>
           Pengaturan
         </Text>
 
@@ -156,16 +143,7 @@ export default function MoreScreen() {
         />
 
         {/* Info Section */}
-        <Text
-          variant="overline"
-          style={{
-            color: theme.textMuted,
-            marginBottom: spacing.md,
-            marginTop: spacing.xl,
-            textTransform: 'uppercase',
-            letterSpacing: 1,
-          }}
-        >
+        <Text variant="overline" style={[styles.sectionTitle, { color: theme.textMuted }]}>
           Informasi
         </Text>
 
@@ -197,16 +175,7 @@ export default function MoreScreen() {
         />
 
         {/* Admin Section */}
-        <Text
-          variant="overline"
-          style={{
-            color: theme.textMuted,
-            marginBottom: spacing.md,
-            marginTop: spacing.xl,
-            textTransform: 'uppercase',
-            letterSpacing: 1,
-          }}
-        >
+        <Text variant="overline" style={[styles.sectionTitle, { color: theme.textMuted }]}>
           Admin
         </Text>
 
@@ -246,14 +215,6 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: spacing.xl,
   },
-  profileCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.lg,
-    borderRadius: borderRadius.xl,
-    borderWidth: 2,
-    ...shadows.sm,
-  },
   avatar: {
     width: 56,
     height: 56,
@@ -265,15 +226,6 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: spacing.md,
   },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.md,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    marginBottom: spacing.sm,
-    ...shadows.sm,
-  },
   iconContainer: {
     width: 44,
     height: 44,
@@ -284,6 +236,12 @@ const styles = StyleSheet.create({
   menuContent: {
     flex: 1,
     marginLeft: spacing.md,
+  },
+  sectionTitle: {
+    marginBottom: spacing.md,
+    marginTop: spacing.lg,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   footer: {
     alignItems: 'center',

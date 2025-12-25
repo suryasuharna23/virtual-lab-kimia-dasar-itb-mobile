@@ -57,7 +57,7 @@ export function Input({
           alignItems: 'center',
           borderWidth: 1,
           borderColor: getBorderColor(),
-          borderRadius: borderRadius.md,
+          borderRadius: borderRadius.xl,
           backgroundColor: theme.surface,
           paddingHorizontal: spacing.md,
           height: 48,

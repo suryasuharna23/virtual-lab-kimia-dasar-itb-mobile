@@ -5,3 +5,7 @@ export * from './Badge'
 export * from './Input'
 export * from './LoadingSpinner'
 export * from './Modal'
+export * from './UserHeader'
+export * from './StreakCard'
+export * from './CourseCard'
+

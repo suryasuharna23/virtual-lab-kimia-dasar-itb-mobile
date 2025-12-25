@@ -5,7 +5,9 @@ import { Image } from 'expo-image'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '@/contexts/ThemeContext'
 import { Text, Card } from '@/components/ui'
-import { layout, spacing, borderRadius } from '@/constants/theme'
+import { layout, spacing, borderRadius, shadows } from '@/constants/theme'
+import Animated, { FadeInDown } from 'react-native-reanimated'
+import Constants from 'expo-constants'
 
 export default function AboutScreen() {
   const { theme } = useTheme()
@@ -19,73 +21,70 @@ export default function AboutScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.header}>
-          <Image
-            source={require('@/assets/images/itb-logo.png')}
-            style={styles.logo}
-            contentFit="contain"
-          />
-          <Text variant="h2" style={{ textAlign: 'center', marginTop: spacing.md }}>
-            Lab Kimia Dasar
-          </Text>
-          <Text variant="body" style={{ color: theme.textSecondary, textAlign: 'center' }}>
-            Institut Teknologi Bandung
-          </Text>
+      <ScrollView 
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.header}>
+            <View style={styles.logoContainer}>
+                <Image
+                    source={require('@/assets/images/itb-logo.png')}
+                    style={styles.logo}
+                    contentFit="contain"
+                />
+            </View>
+            <Text variant="h1" weight="bold" style={{ textAlign: 'center', marginTop: spacing.md, color: theme.textPrimary }}>
+                Lab Kimia Dasar
+            </Text>
+            <Text variant="body" style={{ color: theme.textSecondary, textAlign: 'center' }}>
+                Institut Teknologi Bandung
+            </Text>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(200).springify()}>
+            <Card style={styles.sectionCard}>
+                <Text variant="h3" weight="bold" style={{ marginBottom: spacing.sm, color: theme.textPrimary }}>
+                    Tentang Kami
+                </Text>
+                <Text variant="body" style={{ color: theme.textSecondary, lineHeight: 24 }}>
+                    Laboratorium Kimia Dasar ITB adalah fasilitas pendidikan yang menyediakan praktikum
+                    kimia dasar untuk mahasiswa tahun pertama di Institut Teknologi Bandung. Kami berkomitmen
+                    untuk memberikan pengalaman eksperimental yang aman dan edukatif.
+                </Text>
+            </Card>
+        </Animated.View>
+
+        <View style={styles.infoSection}>
+            <Text variant="h3" weight="bold" style={{ marginBottom: spacing.md, color: theme.textPrimary }}>
+                Informasi Kontak
+            </Text>
+            {contactItems.map((item, index) => (
+                <Animated.View key={index} entering={FadeInDown.delay(300 + (index * 100)).springify()}>
+                    <Card style={styles.infoCard}>
+                        <View style={[styles.iconBox, { backgroundColor: theme.primary + '15' }]}>
+                            <Ionicons name={item.icon} size={24} color={theme.primary} />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text variant="caption" style={{ color: theme.textSecondary, marginBottom: 2 }}>
+                                {item.label}
+                            </Text>
+                            <Text variant="body" weight="bold" style={{ color: theme.textPrimary }}>
+                                {item.value}
+                            </Text>
+                        </View>
+                    </Card>
+                </Animated.View>
+            ))}
         </View>
 
-        <Card style={{ marginBottom: spacing.lg }}>
-          <Text variant="h4" style={{ marginBottom: spacing.md }}>
-            Tentang Kami
-          </Text>
-          <Text variant="body" style={{ color: theme.textSecondary, lineHeight: 24 }}>
-            Laboratorium Kimia Dasar ITB adalah fasilitas pendidikan yang menyediakan praktikum
-            kimia dasar untuk mahasiswa tahun pertama di Institut Teknologi Bandung. Laboratorium
-            ini bertujuan untuk memberikan pengalaman praktis kepada mahasiswa dalam memahami
-            konsep-konsep dasar kimia melalui eksperimen langsung.
-          </Text>
-        </Card>
-
-        <Card style={{ marginBottom: spacing.lg }}>
-          <Text variant="h4" style={{ marginBottom: spacing.md }}>
-            Visi & Misi
-          </Text>
-          <Text variant="body" style={{ color: theme.textSecondary, lineHeight: 24, marginBottom: spacing.md }}>
-            <Text style={{ fontWeight: '600' }}>Visi: </Text>
-            Menjadi laboratorium pendidikan kimia dasar yang unggul dalam mendukung pembelajaran
-            sains berbasis eksperimen.
-          </Text>
-          <Text variant="body" style={{ color: theme.textSecondary, lineHeight: 24 }}>
-            <Text style={{ fontWeight: '600' }}>Misi: </Text>
-            Menyediakan fasilitas praktikum yang modern, aman, dan mendukung pengembangan
-            keterampilan praktis mahasiswa dalam bidang kimia.
-          </Text>
-        </Card>
-
-        <Card>
-          <Text variant="h4" style={{ marginBottom: spacing.md }}>
-            Kontak & Lokasi
-          </Text>
-          {contactItems.map((item, index) => (
-            <View
-              key={index}
-              style={[
-                styles.contactItem,
-                index < contactItems.length - 1 && { marginBottom: spacing.md },
-              ]}
-            >
-              <View style={[styles.iconContainer, { backgroundColor: theme.primarySoft }]}>
-                <Ionicons name={item.icon} size={20} color={theme.primary} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text variant="caption" style={{ color: theme.textMuted }}>
-                  {item.label}
-                </Text>
-                <Text variant="body">{item.value}</Text>
-              </View>
-            </View>
-          ))}
-        </Card>
+        <View style={styles.footer}>
+            <Text variant="caption" style={{ color: theme.textMuted, textAlign: 'center' }}>
+                Versi Aplikasi {Constants.expoConfig?.version || '1.0.0'}
+            </Text>
+            <Text variant="caption" style={{ color: theme.textMuted, textAlign: 'center', marginTop: 4 }}>
+                © {new Date().getFullYear()} Lab Kimia Dasar ITB
+            </Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   )
@@ -102,22 +101,46 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: spacing.xl,
-    paddingTop: spacing.lg,
+    marginTop: spacing.lg,
   },
-  logo: {
+  logoContainer: {
     width: 100,
     height: 100,
-  },
-  contactItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: borderRadius.md,
+    borderRadius: 50,
+    backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.md,
+    ...shadows.md,
+  },
+  logo: {
+    width: 70,
+    height: 70,
+  },
+  sectionCard: {
+    padding: spacing.lg,
+    marginBottom: spacing.xl,
+    ...shadows.sm,
+  },
+  infoSection: {
+    marginBottom: spacing.xl,
+  },
+  infoCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    gap: spacing.md,
+    ...shadows.sm,
+  },
+  iconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: borderRadius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  footer: {
+    marginTop: spacing.xl,
+    marginBottom: spacing.xl,
   },
 })

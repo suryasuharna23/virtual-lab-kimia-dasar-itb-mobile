@@ -1,10 +1,17 @@
 import React, { useState } from 'react'
-import { View, ScrollView, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, ScrollView, TouchableOpacity, StyleSheet, LayoutAnimation, Platform, UIManager } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '@/contexts/ThemeContext'
 import { Text, Card } from '@/components/ui'
-import { layout, spacing } from '@/constants/theme'
+import { layout, spacing, shadows } from '@/constants/theme'
+import Animated, { FadeInDown } from 'react-native-reanimated'
+
+if (Platform.OS === 'android') {
+  if (UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  }
+}
 
 interface FAQItem {
   question: string
@@ -59,40 +66,50 @@ export default function FAQScreen() {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null)
 
   const toggleExpand = (index: number) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpandedIndex(expandedIndex === index ? null : index)
   }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text variant="h2" style={{ marginBottom: spacing.lg }}>
-          Frequently Asked Questions
-        </Text>
+      <ScrollView 
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View entering={FadeInDown.delay(100).springify()}>
+            <Text variant="h2" weight="bold" style={{ marginBottom: spacing.xs, color: theme.textPrimary }}>
+            FAQ
+            </Text>
+            <Text variant="body" style={{ marginBottom: spacing.lg, color: theme.textSecondary }}>
+            Pertanyaan yang sering diajukan seputar praktikum
+            </Text>
+        </Animated.View>
 
         {faqData.map((item, index) => (
-          <Card key={index} style={{ marginBottom: spacing.md }}>
-            <TouchableOpacity
-              style={styles.questionRow}
-              onPress={() => toggleExpand(index)}
-              activeOpacity={0.7}
+          <Animated.View key={index} entering={FadeInDown.delay(200 + (index * 50)).springify()}>
+            <Card 
+                style={styles.card}
+                onPress={() => toggleExpand(index)}
             >
-              <Text variant="body" style={{ flex: 1, fontWeight: '600' }}>
-                {item.question}
-              </Text>
-              <Ionicons
-                name={expandedIndex === index ? 'chevron-up' : 'chevron-down'}
-                size={20}
-                color={theme.textSecondary}
-              />
-            </TouchableOpacity>
-            {expandedIndex === index && (
-              <View style={[styles.answerContainer, { borderTopColor: theme.border }]}>
-                <Text variant="body" style={{ color: theme.textSecondary, lineHeight: 22 }}>
-                  {item.answer}
+                <View style={styles.questionRow}>
+                <Text variant="bodyLarge" weight="bold" style={{ flex: 1, color: theme.textPrimary }}>
+                    {item.question}
                 </Text>
-              </View>
-            )}
-          </Card>
+                <Ionicons
+                    name={expandedIndex === index ? 'chevron-up' : 'chevron-down'}
+                    size={20}
+                    color={theme.primary}
+                />
+                </View>
+                {expandedIndex === index && (
+                <View style={[styles.answerContainer, { borderTopColor: theme.border }]}>
+                    <Text variant="body" style={{ color: theme.textSecondary, lineHeight: 22 }}>
+                    {item.answer}
+                    </Text>
+                </View>
+                )}
+            </Card>
+          </Animated.View>
         ))}
       </ScrollView>
     </SafeAreaView>
@@ -106,6 +123,11 @@ const styles = StyleSheet.create({
   content: {
     padding: layout.screenPaddingHorizontal,
     paddingBottom: spacing['4xl'],
+    paddingTop: spacing.lg,
+  },
+  card: {
+    marginBottom: spacing.md,
+    ...shadows.sm,
   },
   questionRow: {
     flexDirection: 'row',

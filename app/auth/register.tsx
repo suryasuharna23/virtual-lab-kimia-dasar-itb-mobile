@@ -8,15 +8,15 @@ import {
   ScrollView,
   Platform,
 } from 'react-native'
-import { Image } from 'expo-image'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { Text, Input, Button, Card } from '@/components/ui'
-import { spacing, layout, borderRadius } from '@/constants/theme'
+import { spacing, layout, borderRadius, colors } from '@/constants/theme'
 import { StudentRegisterRequest } from '@/types'
+import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated'
 
 export default function RegisterScreen() {
   const router = useRouter()
@@ -124,143 +124,150 @@ export default function RegisterScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.header}>
-            <Image
-              source={require('@/assets/images/itb-logo.png')}
-              style={styles.logo}
-              contentFit="contain"
-            />
-            <Text variant="h2" weight="bold" style={{ color: theme.primary, textAlign: 'center' }}>
-              Daftar Akun Mahasiswa
+          <Animated.View entering={FadeInUp.delay(200).springify()} style={styles.header}>
+             <View style={styles.floatingIconContainer}>
+                <View style={[styles.floatingIcon, { backgroundColor: theme.primarySoft, transform: [{ rotate: '-10deg' }] }]}>
+                    <Ionicons name="school" size={32} color={theme.primary} />
+                </View>
+                <View style={[styles.floatingIcon, { backgroundColor: colors.successSoft, marginTop: 40, transform: [{ rotate: '10deg' }] }]}>
+                    <Ionicons name="flask" size={32} color={colors.success} />
+                </View>
+             </View>
+             
+            <Text variant="h1" weight="bold" style={{ color: theme.textPrimary, textAlign: 'center', marginBottom: spacing.sm }}>
+              Bergabung Sekarang
             </Text>
-            <Text variant="body" style={{ color: theme.textSecondary, textAlign: 'center', marginTop: spacing.xs }}>
-              Isi data diri Anda untuk membuat akun baru
+            <Text variant="body" style={{ color: theme.textSecondary, textAlign: 'center', maxWidth: '80%' }}>
+              Buat akun untuk mulai praktikum virtual dan belajar kimia
             </Text>
-          </View>
+          </Animated.View>
 
-          <Card style={styles.formCard}>
-            <Input
-              label="Nama Lengkap"
-              placeholder="Contoh: Budi Santoso"
-              value={formData.full_name}
-              onChangeText={(text) => handleChange('full_name', text)}
-              error={errors.full_name}
-              leftIcon={<Ionicons name="person-outline" size={20} color={theme.textMuted} />}
-            />
+          <Animated.View entering={FadeInDown.delay(400).springify()} style={{ width: '100%' }}>
+            <Card style={styles.formCard}>
+                <Input
+                label="Nama Lengkap"
+                placeholder="Contoh: Budi Santoso"
+                value={formData.full_name}
+                onChangeText={(text) => handleChange('full_name', text)}
+                error={errors.full_name}
+                leftIcon={<Ionicons name="person-outline" size={20} color={theme.textMuted} />}
+                />
 
-            <View style={{ marginTop: spacing.md }}>
-              <Input
-                label="NIM (Nomor Induk Mahasiswa)"
-                placeholder="Contoh: 16021001"
-                value={formData.nim}
-                onChangeText={(text) => handleChange('nim', text)}
-                error={errors.nim}
-                keyboardType="numeric"
-                leftIcon={<Ionicons name="card-outline" size={20} color={theme.textMuted} />}
-              />
-            </View>
-
-            <View style={{ marginTop: spacing.md }}>
-              <Input
-                label="Email"
-                placeholder="nama@student.itb.ac.id"
-                value={formData.email}
-                onChangeText={(text) => handleChange('email', text)}
-                error={errors.email}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                leftIcon={<Ionicons name="mail-outline" size={20} color={theme.textMuted} />}
-              />
-            </View>
-
-            <View style={{ marginTop: spacing.md }}>
-              <View style={styles.row}>
-                <View style={{ flex: 1, marginRight: spacing.sm }}>
-                  <Input
-                    label="Angkatan"
-                    placeholder="2024"
-                    value={formData.cohort}
-                    onChangeText={(text) => handleChange('cohort', text)}
-                    error={errors.cohort}
+                <View style={{ marginTop: spacing.md }}>
+                <Input
+                    label="NIM"
+                    placeholder="Contoh: 16021001"
+                    value={formData.nim}
+                    onChangeText={(text) => handleChange('nim', text)}
+                    error={errors.nim}
                     keyboardType="numeric"
-                  />
+                    leftIcon={<Ionicons name="card-outline" size={20} color={theme.textMuted} />}
+                />
                 </View>
-                <View style={{ flex: 1, marginLeft: spacing.sm }}>
-                  <Input
-                    label="Fakultas"
-                    placeholder="FMIPA"
-                    value={formData.faculty}
-                    onChangeText={(text) => handleChange('faculty', text)}
-                    error={errors.faculty}
-                  />
+
+                <View style={{ marginTop: spacing.md }}>
+                <Input
+                    label="Email"
+                    placeholder="nama@student.itb.ac.id"
+                    value={formData.email}
+                    onChangeText={(text) => handleChange('email', text)}
+                    error={errors.email}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    leftIcon={<Ionicons name="mail-outline" size={20} color={theme.textMuted} />}
+                />
                 </View>
-              </View>
-            </View>
 
-            <View style={{ marginTop: spacing.md }}>
-              <Input
-                label="Password"
-                placeholder="Minimal 6 karakter"
-                value={formData.password}
-                onChangeText={(text) => handleChange('password', text)}
-                error={errors.password}
-                secureTextEntry={!showPassword}
-                leftIcon={<Ionicons name="lock-closed-outline" size={20} color={theme.textMuted} />}
-                rightIcon={
-                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                    <Ionicons 
-                      name={showPassword ? "eye-off-outline" : "eye-outline"} 
-                      size={20} 
-                      color={theme.textMuted} 
+                <View style={{ marginTop: spacing.md }}>
+                <View style={styles.row}>
+                    <View style={{ flex: 1, marginRight: spacing.sm }}>
+                    <Input
+                        label="Angkatan"
+                        placeholder="2024"
+                        value={formData.cohort}
+                        onChangeText={(text) => handleChange('cohort', text)}
+                        error={errors.cohort}
+                        keyboardType="numeric"
                     />
-                  </TouchableOpacity>
-                }
-              />
-            </View>
-
-            <View style={{ marginTop: spacing.md }}>
-              <Input
-                label="Konfirmasi Password"
-                placeholder="Ulangi password"
-                value={formData.confirmPassword}
-                onChangeText={(text) => handleChange('confirmPassword', text)}
-                error={errors.confirmPassword}
-                secureTextEntry={!showConfirmPassword}
-                leftIcon={<Ionicons name="lock-closed-outline" size={20} color={theme.textMuted} />}
-                rightIcon={
-                  <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                    <Ionicons 
-                      name={showConfirmPassword ? "eye-off-outline" : "eye-outline"} 
-                      size={20} 
-                      color={theme.textMuted} 
+                    </View>
+                    <View style={{ flex: 1, marginLeft: spacing.sm }}>
+                    <Input
+                        label="Fakultas"
+                        placeholder="FMIPA"
+                        value={formData.faculty}
+                        onChangeText={(text) => handleChange('faculty', text)}
+                        error={errors.faculty}
                     />
-                  </TouchableOpacity>
-                }
-              />
-            </View>
+                    </View>
+                </View>
+                </View>
 
-            <View style={{ marginTop: spacing.xl }}>
-              <Button 
-                onPress={handleRegister} 
-                loading={loading} 
-                fullWidth
-                size="lg"
-              >
-                Daftar
-              </Button>
-            </View>
+                <View style={{ marginTop: spacing.md }}>
+                <Input
+                    label="Password"
+                    placeholder="Minimal 6 karakter"
+                    value={formData.password}
+                    onChangeText={(text) => handleChange('password', text)}
+                    error={errors.password}
+                    secureTextEntry={!showPassword}
+                    leftIcon={<Ionicons name="lock-closed-outline" size={20} color={theme.textMuted} />}
+                    rightIcon={
+                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                        <Ionicons 
+                        name={showPassword ? "eye-off-outline" : "eye-outline"} 
+                        size={20} 
+                        color={theme.textMuted} 
+                        />
+                    </TouchableOpacity>
+                    }
+                />
+                </View>
 
-            <View style={styles.footer}>
-              <Text variant="bodySmall" style={{ color: theme.textSecondary }}>
-                Sudah punya akun?{' '}
-              </Text>
-              <TouchableOpacity onPress={navigateToLogin}>
-                <Text variant="bodySmall" weight="bold" style={{ color: theme.primary }}>
-                  Masuk
+                <View style={{ marginTop: spacing.md }}>
+                <Input
+                    label="Konfirmasi Password"
+                    placeholder="Ulangi password"
+                    value={formData.confirmPassword}
+                    onChangeText={(text) => handleChange('confirmPassword', text)}
+                    error={errors.confirmPassword}
+                    secureTextEntry={!showConfirmPassword}
+                    leftIcon={<Ionicons name="lock-closed-outline" size={20} color={theme.textMuted} />}
+                    rightIcon={
+                    <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+                        <Ionicons 
+                        name={showConfirmPassword ? "eye-off-outline" : "eye-outline"} 
+                        size={20} 
+                        color={theme.textMuted} 
+                        />
+                    </TouchableOpacity>
+                    }
+                />
+                </View>
+
+                <View style={{ marginTop: spacing.xl }}>
+                <Button 
+                    onPress={handleRegister} 
+                    loading={loading} 
+                    fullWidth
+                    size="lg"
+                    variant="primary"
+                >
+                    Daftar
+                </Button>
+                </View>
+
+                <View style={styles.footer}>
+                <Text variant="bodySmall" style={{ color: theme.textSecondary }}>
+                    Sudah punya akun?{' '}
                 </Text>
-              </TouchableOpacity>
-            </View>
-          </Card>
+                <TouchableOpacity onPress={navigateToLogin}>
+                    <Text variant="bodySmall" weight="bold" style={{ color: theme.primary }}>
+                    Masuk
+                    </Text>
+                </TouchableOpacity>
+                </View>
+            </Card>
+          </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -274,21 +281,37 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     padding: layout.screenPaddingHorizontal,
+    justifyContent: 'center',
     paddingBottom: spacing['4xl'],
-    paddingTop: spacing.xl,
+    alignItems: 'center',
   },
   header: {
     alignItems: 'center',
     marginBottom: spacing.xl,
+    width: '100%',
   },
-  logo: {
-    width: 80,
-    height: 80,
-    marginBottom: spacing.md,
+  floatingIconContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 40,
+    marginBottom: spacing.xl,
+  },
+  floatingIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   formCard: {
     padding: spacing.xl,
-    borderRadius: borderRadius.xl,
+    borderRadius: borderRadius['2xl'],
+    width: '100%',
   },
   footer: {
     flexDirection: 'row',

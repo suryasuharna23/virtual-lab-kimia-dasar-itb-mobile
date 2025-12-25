@@ -15,7 +15,8 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { Text, Input, Button, Card } from '@/components/ui'
-import { spacing, layout, borderRadius } from '@/constants/theme'
+import { spacing, layout, borderRadius, colors } from '@/constants/theme'
+import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated'
 
 export default function LoginScreen() {
   const router = useRouter()
@@ -81,81 +82,89 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.header}>
-            <Image
-              source={require('@/assets/images/itb-logo.png')}
-              style={styles.logo}
-              contentFit="contain"
-            />
-            <Text variant="h2" weight="bold" style={{ color: theme.primary, textAlign: 'center' }}>
-              Masuk ke Akun
+          {/* Header Illustration / Icons */}
+          <Animated.View entering={FadeInUp.delay(200).springify()} style={styles.header}>
+             <View style={styles.floatingIconContainer}>
+                <View style={[styles.floatingIcon, { backgroundColor: colors.infoSoft, transform: [{ rotate: '-10deg' }] }]}>
+                    <Ionicons name="flask" size={32} color={colors.info} />
+                </View>
+                <View style={[styles.floatingIcon, { backgroundColor: colors.warningSoft, marginTop: 40, transform: [{ rotate: '10deg' }] }]}>
+                    <Ionicons name="book" size={32} color={colors.warning} />
+                </View>
+             </View>
+             
+            <Text variant="h1" weight="bold" style={{ color: theme.textPrimary, textAlign: 'center', marginBottom: spacing.sm }}>
+              Keep going your learn now
             </Text>
-            <Text variant="body" style={{ color: theme.textSecondary, textAlign: 'center', marginTop: spacing.xs }}>
-              Silakan masuk untuk mengakses Virtual Lab
+            <Text variant="body" style={{ color: theme.textSecondary, textAlign: 'center', maxWidth: '80%' }}>
+              Log in to access your virtual lab and continue your progress
             </Text>
-          </View>
+          </Animated.View>
 
-          <Card style={styles.formCard}>
-            <Input
-              label="Email"
-              placeholder="nama@student.itb.ac.id"
-              value={email}
-              onChangeText={(text) => {
-                setEmail(text)
-                if (errors.email) setErrors({ ...errors, email: undefined })
-              }}
-              error={errors.email}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              leftIcon={<Ionicons name="mail-outline" size={20} color={theme.textMuted} />}
-            />
-
-            <View style={{ marginTop: spacing.md }}>
-              <Input
-                label="Password"
-                placeholder="Masukkan password"
-                value={password}
+          <Animated.View entering={FadeInDown.delay(400).springify()} style={{ width: '100%' }}>
+            <Card style={styles.formCard}>
+                <Input
+                label="Email"
+                placeholder="nama@student.itb.ac.id"
+                value={email}
                 onChangeText={(text) => {
-                  setPassword(text)
-                  if (errors.password) setErrors({ ...errors, password: undefined })
+                    setEmail(text)
+                    if (errors.email) setErrors({ ...errors, email: undefined })
                 }}
-                error={errors.password}
-                secureTextEntry={!showPassword}
-                leftIcon={<Ionicons name="lock-closed-outline" size={20} color={theme.textMuted} />}
-                rightIcon={
-                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                    <Ionicons 
-                      name={showPassword ? "eye-off-outline" : "eye-outline"} 
-                      size={20} 
-                      color={theme.textMuted} 
-                    />
-                  </TouchableOpacity>
-                }
-              />
-            </View>
+                error={errors.email}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                leftIcon={<Ionicons name="mail-outline" size={20} color={theme.textMuted} />}
+                />
 
-            <View style={{ marginTop: spacing.xl }}>
-              <Button 
-                onPress={handleLogin} 
-                loading={loading} 
-                fullWidth
-                size="lg"
-              >
-                Masuk
-              </Button>
-            </View>
+                <View style={{ marginTop: spacing.md }}>
+                <Input
+                    label="Password"
+                    placeholder="Masukkan password"
+                    value={password}
+                    onChangeText={(text) => {
+                    setPassword(text)
+                    if (errors.password) setErrors({ ...errors, password: undefined })
+                    }}
+                    error={errors.password}
+                    secureTextEntry={!showPassword}
+                    leftIcon={<Ionicons name="lock-closed-outline" size={20} color={theme.textMuted} />}
+                    rightIcon={
+                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                        <Ionicons 
+                        name={showPassword ? "eye-off-outline" : "eye-outline"} 
+                        size={20} 
+                        color={theme.textMuted} 
+                        />
+                    </TouchableOpacity>
+                    }
+                />
+                </View>
 
-            <View style={styles.footer}>
-              <Text variant="bodySmall" style={{ color: theme.textSecondary }}>
-                Belum punya akun?{' '}
-              </Text>
-              <TouchableOpacity onPress={navigateToRegister}>
-                <Text variant="bodySmall" weight="bold" style={{ color: theme.primary }}>
-                  Daftar
+                <View style={{ marginTop: spacing.xl }}>
+                <Button 
+                    onPress={handleLogin} 
+                    loading={loading} 
+                    fullWidth
+                    size="lg"
+                    variant="primary"
+                >
+                    Sign In
+                </Button>
+                </View>
+
+                <View style={styles.footer}>
+                <Text variant="bodySmall" style={{ color: theme.textSecondary }}>
+                    Haven't an Account?{' '}
                 </Text>
-              </TouchableOpacity>
-            </View>
-          </Card>
+                <TouchableOpacity onPress={navigateToRegister}>
+                    <Text variant="bodySmall" weight="bold" style={{ color: theme.primary }}>
+                    Sign Up
+                    </Text>
+                </TouchableOpacity>
+                </View>
+            </Card>
+          </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -171,11 +180,31 @@ const styles = StyleSheet.create({
     padding: layout.screenPaddingHorizontal,
     justifyContent: 'center',
     paddingBottom: spacing['4xl'],
+    alignItems: 'center',
   },
   header: {
     alignItems: 'center',
     marginBottom: spacing['2xl'],
-    marginTop: spacing.xl,
+    width: '100%',
+  },
+  floatingIconContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 40,
+    marginBottom: spacing.xl,
+  },
+  floatingIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    // Shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   logo: {
     width: 100,
@@ -184,7 +213,8 @@ const styles = StyleSheet.create({
   },
   formCard: {
     padding: spacing.xl,
-    borderRadius: borderRadius.xl,
+    borderRadius: borderRadius['2xl'],
+    width: '100%',
   },
   footer: {
     flexDirection: 'row',

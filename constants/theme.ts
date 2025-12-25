@@ -52,28 +52,34 @@ export interface Theme {
   background: string
   surface: string
   surfaceElevated: string
+  surfacePurple: string
   border: string
+  borderLight: string
   textPrimary: string
   textSecondary: string
   textMuted: string
+  textOnPrimary: string
   primary: string
   primaryLight: string
-  primaryDark?: string
+  primaryDark: string
   primarySoft: string
   accent: string
   accentLight: string
-  accentDark?: string
+  accentDark: string
   accentSoft: string
 }
 
 export const lightTheme: Theme = {
-  background: '#F5F3FF',
+  background: '#E8E5F2',
   surface: '#FFFFFF',
   surfaceElevated: '#FFFFFF',
+  surfacePurple: '#DDD8F0',
   border: '#E5E7EB',
+  borderLight: '#F3F4F6',
   textPrimary: '#1E1B4B',
   textSecondary: '#6B7280',
   textMuted: '#9CA3AF',
+  textOnPrimary: '#FFFFFF',
   primary: colors.primary,
   primaryLight: colors.primaryLight,
   primaryDark: colors.primaryDark,
@@ -88,10 +94,13 @@ export const darkTheme: Theme = {
   background: '#0F0E1A',
   surface: '#1E1B2E',
   surfaceElevated: '#2A2744',
+  surfacePurple: '#2E2A5E',
   border: '#3B3756',
+  borderLight: '#4B4768',
   textPrimary: '#F5F3FF',
   textSecondary: '#9CA3AF',
   textMuted: '#6B7280',
+  textOnPrimary: '#FFFFFF',
   primary: '#E8E6F2',
   primaryLight: '#C4B5FD',
   primaryDark: '#2E2A5E',
@@ -164,7 +173,7 @@ export const spacing = {
 } as const
 
 export const layout = {
-  screenPaddingHorizontal: 16,
+  screenPaddingHorizontal: 20,
   screenPaddingTop: 16,
   cardPadding: 16,
   cardGap: 12,

@@ -15,7 +15,8 @@ import { Text, Card, Badge, Input, Button, LoadingSpinner } from '@/components/u
 import { api } from '@/lib/api'
 import { endpoints } from '@/constants/api'
 import { SearchResult } from '@/types'
-import { layout, spacing, borderRadius } from '@/constants/theme'
+import { layout, spacing, borderRadius, shadows } from '@/constants/theme'
+import Animated, { FadeInDown } from 'react-native-reanimated'
 
 export default function SearchScreen() {
   const { theme } = useTheme()
@@ -87,37 +88,56 @@ export default function SearchScreen() {
     }
   }
 
-  const renderResult = ({ item }: { item: SearchResult }) => (
-    <Card style={{ marginBottom: spacing.md }}>
-      <TouchableOpacity onPress={() => handleResultPress(item)}>
-        <View style={styles.resultHeader}>
-          <Badge variant={getTypeColor(item.type)} size="sm">
-            {getTypeLabel(item.type)}
-          </Badge>
-          <Text variant="caption" style={{ color: theme.textMuted }}>
-            {new Date(item.created_at).toLocaleDateString('id-ID')}
+  const renderResult = ({ item, index }: { item: SearchResult; index: number }) => (
+    <Animated.View entering={FadeInDown.delay(index * 50).springify()}>
+      <Card style={styles.card}>
+        <TouchableOpacity onPress={() => handleResultPress(item)}>
+          <View style={styles.resultHeader}>
+            <Badge variant={getTypeColor(item.type)} size="sm">
+              {getTypeLabel(item.type)}
+            </Badge>
+            <Text variant="caption" style={{ color: theme.textMuted }}>
+              {new Date(item.created_at).toLocaleDateString('id-ID')}
+            </Text>
+          </View>
+          <Text variant="h4" style={{ marginTop: spacing.sm, marginBottom: spacing.xs, color: theme.textPrimary }}>
+            {item.title}
           </Text>
+          <Text variant="bodySmall" style={{ color: theme.textSecondary }} numberOfLines={2}>
+            {item.excerpt}
+          </Text>
+        </TouchableOpacity>
+      </Card>
+    </Animated.View>
+  )
+
+  const renderRecentSearches = () => (
+    <View style={styles.recentContainer}>
+        <Text variant="h4" style={{ marginBottom: spacing.md, color: theme.textPrimary }}>Pencarian Populer</Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+            {['Stoikiometri', 'Jadwal', 'Titrasi', 'Nilai'].map((term) => (
+                <TouchableOpacity 
+                    key={term} 
+                    onPress={() => {
+                        setQuery(term)
+                        // Trigger search manually or effect? 
+                        // Since handleSearch depends on query state which is async, better to just set it. 
+                        // Ideally we would trigger search in useEffect or helper.
+                        // For now let's just set query and user hits search.
+                    }}
+                    style={[styles.recentChip, { backgroundColor: theme.surface }]}
+                >
+                    <Ionicons name="search" size={14} color={theme.textSecondary} />
+                    <Text variant="caption" style={{ color: theme.textSecondary }}>{term}</Text>
+                </TouchableOpacity>
+            ))}
         </View>
-        <Text variant="h4" style={{ marginTop: spacing.sm, marginBottom: spacing.xs }}>
-          {item.title}
-        </Text>
-        <Text variant="bodySmall" style={{ color: theme.textSecondary }} numberOfLines={2}>
-          {item.excerpt}
-        </Text>
-      </TouchableOpacity>
-    </Card>
+    </View>
   )
 
   const renderEmpty = () => {
     if (!hasSearched) {
-      return (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="search-outline" size={64} color={theme.textMuted} />
-          <Text variant="body" style={{ color: theme.textMuted, marginTop: spacing.md, textAlign: 'center' }}>
-            Ketik kata kunci untuk mencari pengumuman, modul, atau file
-          </Text>
-        </View>
-      )
+      return renderRecentSearches()
     }
 
     return (
@@ -137,7 +157,7 @@ export default function SearchScreen() {
         style={{ flex: 1 }}
       >
         <View style={styles.header}>
-          <Text variant="h2">Pencarian</Text>
+          <Text variant="h2" style={{ color: theme.textPrimary }}>Pencarian</Text>
         </View>
 
         <View style={styles.searchContainer}>
@@ -148,21 +168,22 @@ export default function SearchScreen() {
               onChangeText={setQuery}
               onSubmitEditing={handleSearch}
               returnKeyType="search"
-              leftIcon={<Ionicons name="search-outline" size={18} color={theme.textMuted} />}
+              leftIcon={<Ionicons name="search-outline" size={20} color={theme.textMuted} />}
+              style={{ borderRadius: borderRadius.xl }} // Override to ensure rounded-xl
             />
           </View>
           <Button
             onPress={handleSearch}
             disabled={!query.trim()}
-            style={{ marginLeft: spacing.sm }}
+            style={{ marginLeft: spacing.sm, height: 48, width: 48, paddingHorizontal: 0 }}
           >
-            Cari
+            <Ionicons name="arrow-forward" size={24} color="#fff" />
           </Button>
         </View>
 
         {loading ? (
           <View style={styles.loadingContainer}>
-            <LoadingSpinner size="lg" />
+            <LoadingSpinner size="lg" color={theme.primary} />
           </View>
         ) : (
           <FlatList
@@ -171,6 +192,7 @@ export default function SearchScreen() {
             keyExtractor={(item) => `${item.type}-${item.id}`}
             contentContainerStyle={styles.listContent}
             ListEmptyComponent={renderEmpty}
+            showsVerticalScrollIndicator={false}
           />
         )}
       </KeyboardAvoidingView>
@@ -212,5 +234,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  card: {
+    marginBottom: spacing.md,
+    ...shadows.sm,
+  },
+  recentContainer: {
+    marginTop: spacing.xl,
+    paddingHorizontal: spacing.xs,
+  },
+  recentChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
+    gap: 6,
+    ...shadows.sm,
   },
 })

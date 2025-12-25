@@ -46,7 +46,6 @@ export function QuickAccess({ items, columns = 2, style }: QuickAccessProps) {
             styles.gridItem,
             { width: itemWidth, backgroundColor: theme.surface },
           ])}
-          variant="standard"
         >
           <TouchableOpacity
             style={styles.touchable}
