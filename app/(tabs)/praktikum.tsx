@@ -350,7 +350,7 @@ export default function PraktikumScreen() {
             Praktikum
           </Text>
           <Text variant="body" style={{ color: theme.textSecondary }}>
-            Jangan lupa pelajari modul praktikum 
+            Pelajari semua modul praktikum dengan baik! 💪
           </Text>
         </View>
 

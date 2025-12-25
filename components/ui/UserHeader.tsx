@@ -60,7 +60,7 @@ export function UserHeader({
           <TouchableOpacity 
             onPress={() => Alert.alert(
               'Level Kehadiran',
-              "Level ini menunjukkan progress kehadiran praktikum kamu.\n\nBerdasarkan motto ITB 'In Harmonia Progressio':\n\n• Initium (0-24%) - Baru memulai\n• Progressio (25-49%) - Dalam perkembangan\n• Harmonia (50-74%) - Selaras dan konsisten\n• Excellentia (75-100%) - Keunggulan tertinggi"
+              "Level ini menunjukkan progress kehadiran praktikum kamu.\n\nBerikut adalah level akun yang tersedia yang terinspirasi dari motto ITB 'In Harmonia Progressio':\n\n• Initium (0-24%) - Baru memulai\n• Progressio (25-49%) - Dalam perkembangan\n• Harmonia (50-74%) - Selaras dan konsisten\n• Excellentia (75-100%) - Keunggulan tertinggi"
             )}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
