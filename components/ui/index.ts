@@ -8,4 +8,5 @@ export * from './Modal'
 export * from './UserHeader'
 export * from './StreakCard'
 export * from './CourseCard'
+export * from './ProgressCard'
 

@@ -14,7 +14,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { 
   Text, 
   UserHeader, 
-  StreakCard, 
+  ProgressCard, 
   CourseCard,
   Card
 } from '@/components/ui'
@@ -30,8 +30,7 @@ export default function HomeScreen() {
   const router = useRouter()
   const [refreshing, setRefreshing] = useState(false)
   const [modules, setModules] = useState<Module[]>([])
-  const [streak, setStreak] = useState(0)
-  const [completedDays, setCompletedDays] = useState([false, false, false, false, false, false, false])
+  const [completedModules, setCompletedModules] = useState(0) // TODO: Track from real progress
 
   const student = user as Student | null
 
@@ -39,7 +38,7 @@ export default function HomeScreen() {
     try {
       const response = await api.get<Module[]>(endpoints.modules.list)
       if (response.success && response.data) {
-        setModules(response.data.slice(0, 3))
+        setModules(response.data)
       }
     } catch (error) {
       console.log('Failed to fetch modules:', error)
@@ -63,6 +62,17 @@ export default function HomeScreen() {
   const getUserDisplayName = () => {
     if (!student) return 'Mahasiswa'
     return student.full_name?.split(' ')[0] || 'Mahasiswa'
+  }
+
+  const getProgressLevel = () => {
+    const totalModules = modules.length
+    if (totalModules === 0) return 'Pemula'
+    const percentage = (completedModules / totalModules) * 100
+    if (percentage === 100) return 'Master'
+    if (percentage >= 75) return 'Mahir'
+    if (percentage >= 50) return 'Menengah'
+    if (percentage >= 25) return 'Dasar'
+    return 'Pemula'
   }
 
   const getModuleIcon = (index: number): string => {
@@ -95,26 +105,26 @@ export default function HomeScreen() {
           
           <UserHeader 
             name={getUserDisplayName()} 
-            level="Beginner"
+            level={getProgressLevel()}
             avatarUrl={student?.avatar_url}
             onNotificationPress={() => Alert.alert('Notifikasi', 'Tidak ada notifikasi baru')}
-            onGiftPress={() => Alert.alert('Hadiah', 'Kumpulkan streak untuk hadiah!')}
+            onGiftPress={() => router.push('/praktikum' as any)}
           />
 
           <View style={{ marginBottom: spacing.xl }}>
             <Text variant="h1" weight="bold" style={{ color: theme.textPrimary, marginBottom: spacing.xs }}>
-              Siap praktikum?
+              Halo, {getUserDisplayName()}! 👋
             </Text>
             <Text variant="body" style={{ color: theme.textSecondary }}>
-              Lanjutkan streak dan progress belajarmu
+              Siap untuk praktikum kimia hari ini?
             </Text>
           </View>
 
           <Animated.View entering={FadeInDown.delay(100).springify()}>
-            <StreakCard 
-              streakCount={streak}
-              completedDays={completedDays}
-              onRewardPress={() => Alert.alert('Streak Reward', 'Selamat! Kamu konsisten belajar.')}
+            <ProgressCard 
+              totalModules={modules.length}
+              completedModules={completedModules}
+              onContinuePress={() => router.push('/praktikum' as any)}
               style={{ marginBottom: spacing.xl }}
             />
           </Animated.View>
@@ -140,7 +150,7 @@ export default function HomeScreen() {
                 contentContainerStyle={{ paddingRight: spacing.lg }}
              >
                {modules.length > 0 ? (
-                 modules.map((module, index) => (
+                 modules.slice(0, 5).map((module, index) => (
                    <Animated.View 
                       key={module.id} 
                       entering={FadeInDown.delay(200 + (index * 100)).springify()}
@@ -156,21 +166,20 @@ export default function HomeScreen() {
                    </Animated.View>
                  ))
                ) : (
-                 [1, 2, 3].map((_, index) => (
-                   <Animated.View 
-                      key={index} 
-                      entering={FadeInDown.delay(200 + (index * 100)).springify()}
-                   >
-                     <CourseCard 
-                       title={`Modul ${index + 1}`}
-                       progress={0}
-                       iconName={getModuleIcon(index) as any}
-                       iconColor={colors.white}
-                       iconBgColor={getModuleColor(index)}
-                       onPress={() => router.push('/praktikum' as any)}
-                     />
-                   </Animated.View>
-                 ))
+                 <Animated.View entering={FadeInDown.delay(200).springify()}>
+                   <Card style={{ 
+                     width: 200, 
+                     height: 140, 
+                     alignItems: 'center', 
+                     justifyContent: 'center',
+                     marginRight: spacing.md 
+                   }}>
+                     <Ionicons name="cloud-offline-outline" size={32} color={theme.textMuted} />
+                     <Text variant="bodySmall" style={{ color: theme.textMuted, marginTop: spacing.sm, textAlign: 'center' }}>
+                       Belum ada modul.{'\n'}Tarik untuk refresh.
+                     </Text>
+                   </Card>
+                 </Animated.View>
                )}
              </ScrollView>
           </View>
