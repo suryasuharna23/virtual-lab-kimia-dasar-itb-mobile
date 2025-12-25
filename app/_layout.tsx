@@ -67,8 +67,6 @@ function RootLayoutContent() {
           <Stack.Screen name="kontak" options={{ headerShown: false }} />
           <Stack.Screen name="search" options={{ title: 'Pencarian' }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-          <Stack.Screen name="login" options={{ headerShown: false }} />
-          <Stack.Screen name="register" options={{ headerShown: false }} />
         </Stack>
       </AuthGuard>
       <StatusBar style={isDark ? 'light' : 'dark'} />
