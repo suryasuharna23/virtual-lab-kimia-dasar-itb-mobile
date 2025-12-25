@@ -8,6 +8,7 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { 
@@ -181,19 +182,19 @@ export default function HomeScreen() {
             <View style={{ flexDirection: 'row', gap: spacing.md }}>
                 <Card 
                   onPress={() => router.push('/virtual-lab' as any)}
-                  style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: 100 }}
+                  style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: 120 }}
                 >
-                    <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: theme.accentSoft, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
-                       <Text style={{ fontSize: 24 }}>🧪</Text>
+                    <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: theme.accentSoft, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm }}>
+                       <Ionicons name="flask" size={28} color={colors.accent} />
                     </View>
                     <Text weight="bold">Virtual Lab</Text>
                 </Card>
                 <Card 
                   onPress={() => router.push('/pengumuman' as any)}
-                  style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: 100 }}
+                  style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: 120 }}
                 >
-                     <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.infoSoft, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
-                       <Text style={{ fontSize: 24 }}>📢</Text>
+                     <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: colors.infoSoft, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm }}>
+                       <Ionicons name="megaphone" size={28} color={colors.info} />
                     </View>
                     <Text weight="bold">Pengumuman</Text>
                 </Card>
