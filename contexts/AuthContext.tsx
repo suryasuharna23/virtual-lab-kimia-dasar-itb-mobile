@@ -37,20 +37,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
-      // Try admin endpoint first
+      // Try student endpoint first (this is a student mobile app)
       try {
-        const response = await api.get<User>(endpoints.auth.me)
+        const response = await api.get<Student>(endpoints.auth.studentMe)
         if (response.success && response.data) {
           setUser(response.data)
           return
         }
       } catch {
-        // Not admin, try student
+        // Not student, try admin
       }
 
-      // Try student endpoint
+      // Try admin endpoint
       try {
-        const response = await api.get<Student>(endpoints.auth.studentMe)
+        const response = await api.get<User>(endpoints.auth.me)
         if (response.success && response.data) {
           setUser(response.data)
           return
