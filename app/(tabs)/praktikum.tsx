@@ -93,14 +93,17 @@ export default function PraktikumScreen() {
 
   const handleDownloadModule = async (module: Module) => {
     if (isDownloaded(module.id)) {
-      Alert.alert(
-        'File Sudah Diunduh',
-        'File ini sudah tersimpan offline. Buka di halaman Offline Files?',
-        [
-          { text: 'Batal', style: 'cancel' },
-          { text: 'Lihat', onPress: () => {} }
-        ]
-      )
+      const offlineFile = offlineFiles.find(f => f.id === String(module.id))
+      if (offlineFile) {
+        Alert.alert(
+          'File Sudah Diunduh',
+          'File ini sudah tersimpan offline.',
+          [
+            { text: 'OK', style: 'cancel' },
+            { text: 'Buka File', onPress: () => Sharing.shareAsync(offlineFile.localPath) }
+          ]
+        )
+      }
       return
     }
 
@@ -112,7 +115,7 @@ export default function PraktikumScreen() {
       )
       
       if (!response.success || !response.data?.download_url) {
-        throw new Error('Gagal mendapatkan URL download')
+        throw new Error('FILE_NOT_AVAILABLE')
       }
 
       const downloadUrl = response.data.download_url
@@ -121,7 +124,7 @@ export default function PraktikumScreen() {
       
       const fetchResponse = await fetch(downloadUrl)
       if (!fetchResponse.ok) {
-        throw new Error('Download gagal')
+        throw new Error('DOWNLOAD_FAILED')
       }
       
       const blob = await fetchResponse.blob()
@@ -155,7 +158,88 @@ export default function PraktikumScreen() {
       )
     } catch (error) {
       console.error('Download error:', error)
-      Alert.alert('Gagal', 'Tidak dapat mengunduh file. Coba lagi nanti.')
+      const message = error instanceof Error && error.message === 'FILE_NOT_AVAILABLE'
+        ? 'File modul belum tersedia di server.'
+        : 'Tidak dapat mengunduh file. Coba lagi nanti.'
+      Alert.alert('Gagal', message)
+    } finally {
+      setDownloadingId(null)
+    }
+  }
+
+  const handleDownloadGroup = async (group: Group) => {
+    if (isDownloaded(`group_${group.id}`)) {
+      const offlineFile = offlineFiles.find(f => f.id === `group_${group.id}`)
+      if (offlineFile) {
+        Alert.alert(
+          'File Sudah Diunduh',
+          'File ini sudah tersimpan offline.',
+          [
+            { text: 'OK', style: 'cancel' },
+            { text: 'Buka File', onPress: () => Sharing.shareAsync(offlineFile.localPath) }
+          ]
+        )
+      }
+      return
+    }
+
+    if (group.has_password) {
+      Alert.alert('Perlu Password', 'File ini dilindungi password. Fitur ini belum tersedia.')
+      return
+    }
+
+    try {
+      setDownloadingId(`group_${group.id}`)
+      
+      const response = await api.get<{ download_url: string; expires_at: string }>(
+        endpoints.groups.download(group.id)
+      )
+      
+      if (!response.success || !response.data?.download_url) {
+        throw new Error('FILE_NOT_AVAILABLE')
+      }
+
+      const downloadUrl = response.data.download_url
+      const fileName = `group_${group.id}_${Date.now()}.pdf`
+      const file = new File(Paths.cache, fileName)
+      
+      const fetchResponse = await fetch(downloadUrl)
+      if (!fetchResponse.ok) {
+        throw new Error('DOWNLOAD_FAILED')
+      }
+      
+      const blob = await fetchResponse.blob()
+      const arrayBuffer = await blob.arrayBuffer()
+      const uint8Array = new Uint8Array(arrayBuffer)
+      file.write(uint8Array)
+
+      const newOfflineFile: OfflineFile = {
+        id: `group_${group.id}`,
+        name: group.name,
+        localPath: file.uri,
+        type: 'group',
+        downloadedAt: new Date().toISOString(),
+        size: group.file_size || 0,
+      }
+
+      const updatedFiles = [...offlineFiles, newOfflineFile]
+      await AsyncStorage.setItem(OFFLINE_FILES_KEY, JSON.stringify(updatedFiles))
+      setOfflineFiles(updatedFiles)
+
+      Alert.alert(
+        'Berhasil! ✓',
+        `${group.name} berhasil diunduh dan tersimpan offline.`,
+        [
+          { text: 'OK' },
+          { text: 'Buka File', onPress: () => Sharing.shareAsync(file.uri) }
+        ]
+      )
+    } catch (error) {
+      console.error('Download group error:', error)
+      const message = error instanceof Error && error.message === 'FILE_NOT_AVAILABLE'
+        ? 'File kelompok belum tersedia di server.'
+        : 'Tidak dapat mengunduh file. Coba lagi nanti.'
+      Alert.alert('Gagal', message)
     } finally {
       setDownloadingId(null)
     }
@@ -381,8 +465,13 @@ export default function PraktikumScreen() {
                 </View>
             </Card>
           ) : (
-            groups.map((group, index) => (
-              <Animated.View key={group.id} entering={FadeInDown.delay(500 + (index * 100)).springify()}>
+            groups.map((group, index) => {
+              const groupKey = `group_${group.id}`
+              const isDownloading = downloadingId === groupKey
+              const downloaded = isDownloaded(groupKey)
+              
+              return (
+                <Animated.View key={group.id} entering={FadeInDown.delay(500 + (index * 100)).springify()}>
                   <Card style={styles.groupCard}>
                     <View style={styles.groupCardContent}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
@@ -396,34 +485,50 @@ export default function PraktikumScreen() {
                         }}>
                             <Ionicons name="people" size={24} color={colors.info} />
                         </View>
-                        <View>
+                        <View style={{ flex: 1 }}>
                             <Text
-                            variant="bodyLarge"
-                            style={{ color: theme.textPrimary, fontWeight: '700' }}
+                              variant="bodyLarge"
+                              style={{ color: theme.textPrimary, fontWeight: '700' }}
+                              numberOfLines={1}
                             >
-                            {group.name}
+                              {group.name}
                             </Text>
                             <Text
-                            variant="caption"
-                            style={{ color: theme.textSecondary }}
+                              variant="caption"
+                              style={{ color: theme.textSecondary }}
                             >
-                            {group.cohort || 'Umum'}
+                              {group.cohort || 'Umum'}
                             </Text>
+                            {downloaded && (
+                              <Badge variant="success" size="sm" style={{ marginTop: 4, alignSelf: 'flex-start' }}>
+                                Tersimpan
+                              </Badge>
+                            )}
                         </View>
                       </View>
                       <TouchableOpacity
-                        style={[styles.downloadButton, { backgroundColor: colors.infoSoft }]}
+                        onPress={() => handleDownloadGroup(group)}
+                        disabled={isDownloading}
+                        style={[
+                          styles.downloadButton, 
+                          { backgroundColor: downloaded ? colors.successSoft : colors.infoSoft }
+                        ]}
                       >
-                        <Ionicons
-                          name="download-outline"
-                          size={24}
-                          color={colors.info}
-                        />
+                        {isDownloading ? (
+                          <LoadingSpinner size="sm" color={colors.info} />
+                        ) : (
+                          <Ionicons
+                            name={downloaded ? "checkmark-circle" : "download-outline"}
+                            size={24}
+                            color={downloaded ? colors.success : colors.info}
+                          />
+                        )}
                       </TouchableOpacity>
                     </View>
                   </Card>
-              </Animated.View>
-            ))
+                </Animated.View>
+              )
+            })
           )}
         </View>
 
