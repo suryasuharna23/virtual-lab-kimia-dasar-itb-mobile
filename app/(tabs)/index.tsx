@@ -155,46 +155,46 @@ export default function HomeScreen() {
                   Lihat semua
                 </Text>
              </View>
-
-             <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingRight: spacing.lg }}
-             >
-               {modules.length > 0 ? (
-                 modules.slice(0, 5).map((module, index) => (
-                   <Animated.View 
-                      key={module.id} 
-                      entering={FadeInDown.delay(200 + (index * 100)).springify()}
-                   >
-                     <CourseCard 
-                       title={module.title}
-                       progress={0}
-                       iconName={getModuleIcon(index) as any}
-                       iconColor={colors.white}
-                       iconBgColor={getModuleColor(index)}
-                       onPress={() => router.push('/praktikum' as any)}
-                     />
-                   </Animated.View>
-                 ))
-               ) : (
-                 <Animated.View entering={FadeInDown.delay(200).springify()}>
-                   <Card style={{ 
-                     width: 200, 
-                     height: 140, 
-                     alignItems: 'center', 
-                     justifyContent: 'center',
-                     marginRight: spacing.md 
-                   }}>
-                     <Ionicons name="cloud-offline-outline" size={32} color={theme.textMuted} />
-                     <Text variant="bodySmall" style={{ color: theme.textMuted, marginTop: spacing.sm, textAlign: 'center' }}>
-                       Belum ada modul.{'\n'}Tarik untuk refresh.
-                     </Text>
-                   </Card>
-                 </Animated.View>
-               )}
-             </ScrollView>
           </View>
+
+          <ScrollView 
+             horizontal 
+             showsHorizontalScrollIndicator={false}
+             contentContainerStyle={{ paddingHorizontal: layout.screenPaddingHorizontal }}
+             style={{ marginHorizontal: -layout.screenPaddingHorizontal, marginBottom: spacing.xl }}
+          >
+            {modules.length > 0 ? (
+              modules.slice(0, 5).map((module, index) => (
+                <Animated.View 
+                   key={module.id} 
+                   entering={FadeInDown.delay(200 + (index * 100)).springify()}
+                >
+                  <CourseCard 
+                    title={module.title}
+                    iconName={getModuleIcon(index) as any}
+                    iconColor={colors.white}
+                    iconBgColor={getModuleColor(index)}
+                    onPress={() => router.push('/praktikum' as any)}
+                  />
+                </Animated.View>
+              ))
+            ) : (
+              <Animated.View entering={FadeInDown.delay(200).springify()}>
+                <Card style={{ 
+                  width: 200, 
+                  height: 76, 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  marginRight: spacing.md 
+                }}>
+                  <Ionicons name="cloud-offline-outline" size={32} color={theme.textMuted} />
+                  <Text variant="bodySmall" style={{ color: theme.textMuted, marginTop: spacing.sm, textAlign: 'center' }}>
+                    Belum ada modul.{'\n'}Tarik untuk refresh.
+                  </Text>
+                </Card>
+              </Animated.View>
+            )}
+          </ScrollView>
 
           <View>
             <Text variant="h3" weight="bold" style={{ color: theme.textPrimary, marginBottom: spacing.md }}>

@@ -7,7 +7,6 @@ import { Ionicons } from '@expo/vector-icons'
 
 interface CourseCardProps {
   title: string
-  progress: number // 0 to 1
   iconName: keyof typeof Ionicons.glyphMap
   iconColor?: string
   iconBgColor?: string
@@ -17,7 +16,6 @@ interface CourseCardProps {
 
 export function CourseCard({
   title,
-  progress,
   iconName,
   iconColor,
   iconBgColor,
@@ -34,10 +32,12 @@ export function CourseCard({
         {
           backgroundColor: theme.surface,
           borderRadius: borderRadius['2xl'],
-          padding: spacing.lg,
-          width: 160,
-          height: 180,
+          padding: spacing.md,
+          width: 200,
+          height: 76,
           marginRight: spacing.md,
+          flexDirection: 'row',
+          alignItems: 'center',
           ...shadows.sm
         },
         {
@@ -48,30 +48,20 @@ export function CourseCard({
       ]}
     >
       <View style={{ 
-        width: 48, 
-        height: 48, 
-        borderRadius: 16, 
+        width: 44, 
+        height: 44, 
+        borderRadius: 14, 
         backgroundColor: iconBgColor || theme.primarySoft,
         alignItems: 'center', 
         justifyContent: 'center',
-        marginBottom: spacing.md
+        marginRight: spacing.md
       }}>
-        <Ionicons name={iconName} size={24} color={iconColor || theme.primary} />
+        <Ionicons name={iconName} size={22} color={iconColor || theme.primary} />
       </View>
 
-      <Text variant="body" weight="bold" style={{ marginBottom: spacing.md, flex: 1 }} numberOfLines={2}>
+      <Text variant="body" weight="bold" style={{ flex: 1 }} numberOfLines={2}>
         {title}
       </Text>
-
-      <View>
-         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-            <Text variant="caption" color="secondary">Progress</Text>
-            <Text variant="caption" weight="bold">{Math.round(progress * 100)}%</Text>
-         </View>
-         <View style={{ height: 6, backgroundColor: theme.border, borderRadius: 3, overflow: 'hidden' }}>
-            <View style={{ width: `${progress * 100}%`, height: '100%', backgroundColor: iconColor || theme.primary, borderRadius: 3 }} />
-         </View>
-      </View>
     </TouchableOpacity>
   )
 }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { StyleSheet, View, Pressable } from 'react-native'
+import { StyleSheet, View, Pressable, ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -76,7 +76,11 @@ export default function NametagScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      <View style={styles.content}>
+      <ScrollView 
+        style={styles.content}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Nametag Card */}
         <Animated.View entering={FadeInDown.delay(100).springify()}>
           <Card style={styles.nametagCard}>
@@ -205,7 +209,9 @@ export default function NametagScreen() {
             </View>
           )}
         </Animated.View>
-      </View>
+
+        <View style={{ height: 40 }} />
+      </ScrollView>
     </SafeAreaView>
   )
 }
@@ -229,6 +235,8 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: spacing.lg,
   },
   nametagCard: {
