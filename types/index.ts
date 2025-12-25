@@ -38,7 +38,7 @@ export interface StudentRegisterRequest {
 }
 
 export interface LoginResponse {
-  user: User
+  user: User | Student
   token: string
 }
 
