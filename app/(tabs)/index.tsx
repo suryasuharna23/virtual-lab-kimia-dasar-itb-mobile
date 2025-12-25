@@ -9,6 +9,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useTheme } from '@/contexts/ThemeContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { 
   Text, 
   UserHeader, 
@@ -20,32 +21,56 @@ import { layout, spacing, colors } from '@/constants/theme'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { api } from '@/lib/api'
 import { endpoints } from '@/constants/api'
-import { Announcement } from '@/types'
+import { Module } from '@/types'
 
 export default function HomeScreen() {
   const { theme } = useTheme()
+  const { user } = useAuth()
   const router = useRouter()
   const [refreshing, setRefreshing] = useState(false)
-  const [streak, setStreak] = useState(3) // Mock streak
-  const [completedDays, setCompletedDays] = useState([true, true, true, false, false, false, false]) // Mock days
+  const [modules, setModules] = useState<Module[]>([])
+  const [streak, setStreak] = useState(0)
+  const [completedDays, setCompletedDays] = useState([false, false, false, false, false, false, false])
 
-  // Keep existing logic for fetching something just to show activity
-  const fetchData = useCallback(async () => {
-    // Simulate fetch
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    setRefreshing(false)
+  const fetchModules = useCallback(async () => {
+    try {
+      const response = await api.get<Module[]>(endpoints.modules.list)
+      if (response.success && response.data) {
+        setModules(response.data.slice(0, 3))
+      }
+    } catch (error) {
+      console.log('Failed to fetch modules:', error)
+    }
   }, [])
 
-  const onRefresh = useCallback(() => {
+  const fetchData = useCallback(async () => {
     setRefreshing(true)
+    await fetchModules()
+    setRefreshing(false)
+  }, [fetchModules])
+
+  useEffect(() => {
+    fetchModules()
+  }, [fetchModules])
+
+  const onRefresh = useCallback(() => {
     fetchData()
   }, [fetchData])
 
-  const courses = [
-    { id: 1, title: 'Modul 1: Stoikiometri', progress: 0.75, icon: 'flask', color: colors.info },
-    { id: 2, title: 'Modul 2: Titrasi Asam Basa', progress: 0.30, icon: 'color-filter', color: colors.warning },
-    { id: 3, title: 'Modul 3: Kesetimbangan Kimia', progress: 0.10, icon: 'sync', color: colors.success },
-  ]
+  const getUserDisplayName = () => {
+    if (!user) return 'Mahasiswa'
+    return user.full_name?.split(' ')[0] || 'Mahasiswa'
+  }
+
+  const getModuleIcon = (index: number): string => {
+    const icons = ['flask', 'color-filter', 'sync', 'beaker', 'analytics']
+    return icons[index % icons.length]
+  }
+
+  const getModuleColor = (index: number): string => {
+    const moduleColors = [colors.info, colors.warning, colors.success, colors.error, colors.primary]
+    return moduleColors[index % moduleColors.length]
+  }
 
   return (
     <SafeAreaView
@@ -65,15 +90,13 @@ export default function HomeScreen() {
       >
         <View style={styles.content}>
           
-          {/* 1. Header */}
           <UserHeader 
-            name="Rara" 
+            name={getUserDisplayName()} 
             level="Beginner" 
             onNotificationPress={() => Alert.alert('Notifikasi', 'Tidak ada notifikasi baru')}
             onGiftPress={() => Alert.alert('Hadiah', 'Kumpulkan streak untuk hadiah!')}
           />
 
-          {/* 2. Greeting */}
           <View style={{ marginBottom: spacing.xl }}>
             <Text variant="h1" weight="bold" style={{ color: theme.textPrimary, marginBottom: spacing.xs }}>
               Siap praktikum?
@@ -83,7 +106,6 @@ export default function HomeScreen() {
             </Text>
           </View>
 
-          {/* 3. Streak Card */}
           <Animated.View entering={FadeInDown.delay(100).springify()}>
             <StreakCard 
               streakCount={streak}
@@ -93,7 +115,6 @@ export default function HomeScreen() {
             />
           </Animated.View>
 
-          {/* 4. Ongoing Course Section */}
           <View style={{ marginBottom: spacing.xl }}>
              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md }}>
                 <Text variant="h3" weight="bold" style={{ color: theme.textPrimary }}>
@@ -114,25 +135,42 @@ export default function HomeScreen() {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{ paddingRight: spacing.lg }}
              >
-               {courses.map((course, index) => (
-                 <Animated.View 
-                    key={course.id} 
-                    entering={FadeInDown.delay(200 + (index * 100)).springify()}
-                 >
-                   <CourseCard 
-                     title={course.title}
-                     progress={course.progress}
-                     iconName={course.icon as any}
-                     iconColor={colors.white}
-                     iconBgColor={course.color}
-                     onPress={() => router.push('/praktikum' as any)}
-                   />
-                 </Animated.View>
-               ))}
+               {modules.length > 0 ? (
+                 modules.map((module, index) => (
+                   <Animated.View 
+                      key={module.id} 
+                      entering={FadeInDown.delay(200 + (index * 100)).springify()}
+                   >
+                     <CourseCard 
+                       title={module.title}
+                       progress={0}
+                       iconName={getModuleIcon(index) as any}
+                       iconColor={colors.white}
+                       iconBgColor={getModuleColor(index)}
+                       onPress={() => router.push('/praktikum' as any)}
+                     />
+                   </Animated.View>
+                 ))
+               ) : (
+                 [1, 2, 3].map((_, index) => (
+                   <Animated.View 
+                      key={index} 
+                      entering={FadeInDown.delay(200 + (index * 100)).springify()}
+                   >
+                     <CourseCard 
+                       title={`Modul ${index + 1}`}
+                       progress={0}
+                       iconName={getModuleIcon(index) as any}
+                       iconColor={colors.white}
+                       iconBgColor={getModuleColor(index)}
+                       onPress={() => router.push('/praktikum' as any)}
+                     />
+                   </Animated.View>
+                 ))
+               )}
              </ScrollView>
           </View>
 
-          {/* 5. Quick Links (Optional additions based on context) */}
           <View>
             <Text variant="h3" weight="bold" style={{ color: theme.textPrimary, marginBottom: spacing.md }}>
                Menu Lainnya

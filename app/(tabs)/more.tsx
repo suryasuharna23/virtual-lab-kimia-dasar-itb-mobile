@@ -4,11 +4,13 @@ import {
   ScrollView,
   StyleSheet,
   Switch,
+  Alert,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { Text, Badge, Card } from '@/components/ui'
 import { useTheme } from '@/contexts/ThemeContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { layout, spacing, borderRadius, colors } from '@/constants/theme'
 import Constants from 'expo-constants'
 import { useRouter } from 'expo-router'
@@ -16,11 +18,29 @@ import * as Haptics from 'expo-haptics'
 
 export default function MoreScreen() {
   const { theme, isDark, toggleTheme } = useTheme()
+  const { user, logout, isAuthenticated } = useAuth()
   const router = useRouter()
 
   const handleToggleTheme = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     toggleTheme()
+  }
+
+  const handleLogout = async () => {
+    Alert.alert(
+      'Logout',
+      'Apakah kamu yakin ingin keluar?',
+      [
+        { text: 'Batal', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            await logout()
+          },
+        },
+      ]
+    )
   }
 
   const MenuItem = ({
@@ -75,17 +95,12 @@ export default function MoreScreen() {
     router.push(path as any)
   }
 
-  const handleAdminLogin = () => {
-    router.push('/auth/login' as any)
-  }
-
   return (
     <SafeAreaView
       edges={['top']}
       style={[styles.container, { backgroundColor: theme.background }]}
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
         <View style={styles.header}>
           <Text variant="h1" style={{ color: theme.textPrimary }}>
             Lainnya
@@ -95,32 +110,32 @@ export default function MoreScreen() {
           </Text>
         </View>
 
-        {/* Profile Card */}
-        <Card
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginBottom: spacing.xl,
-            backgroundColor: theme.primarySoft,
-          }}
-        >
-          <View style={[styles.avatar, { backgroundColor: theme.primary }]}>
-             <Ionicons name="flask" size={32} color={colors.white} />
-          </View>
-          <View style={styles.profileInfo}>
-            <Text variant="h3" style={{ color: theme.textPrimary }}>
-              Lab Kimia Dasar
-            </Text>
-            <Text variant="body" style={{ color: theme.textSecondary }}>
-              Institut Teknologi Bandung
-            </Text>
-          </View>
-          <Badge variant="warning" size="sm">
-            2025
-          </Badge>
-        </Card>
+        {isAuthenticated && user && (
+          <Card
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginBottom: spacing.xl,
+              backgroundColor: theme.primarySoft,
+            }}
+          >
+            <View style={[styles.avatar, { backgroundColor: theme.primary }]}>
+               <Ionicons name="person" size={28} color={colors.white} />
+            </View>
+            <View style={styles.profileInfo}>
+              <Text variant="h3" style={{ color: theme.textPrimary }}>
+                {user.full_name || 'Mahasiswa'}
+              </Text>
+              <Text variant="body" style={{ color: theme.textSecondary }}>
+                {user.email}
+              </Text>
+            </View>
+            <Badge variant="success" size="sm">
+              Active
+            </Badge>
+          </Card>
+        )}
 
-        {/* Settings Section */}
         <Text variant="overline" style={[styles.sectionTitle, { color: theme.textMuted }]}>
           Pengaturan
         </Text>
@@ -142,7 +157,15 @@ export default function MoreScreen() {
           }
         />
 
-        {/* Info Section */}
+        <MenuItem
+          icon="download"
+          label="File Offline"
+          desc="Kelola file yang diunduh"
+          onPress={() => handleNavigation('/offline-files')}
+          iconBgColor={colors.successSoft}
+          iconColor={colors.success}
+        />
+
         <Text variant="overline" style={[styles.sectionTitle, { color: theme.textMuted }]}>
           Informasi
         </Text>
@@ -174,21 +197,23 @@ export default function MoreScreen() {
           iconColor={colors.accent}
         />
 
-        {/* Admin Section */}
-        <Text variant="overline" style={[styles.sectionTitle, { color: theme.textMuted }]}>
-          Admin
-        </Text>
+        {isAuthenticated && (
+          <>
+            <Text variant="overline" style={[styles.sectionTitle, { color: theme.textMuted }]}>
+              Akun
+            </Text>
 
-        <MenuItem
-          icon="shield-checkmark"
-          label="Login Admin"
-          desc="Untuk asisten dan dosen"
-          onPress={handleAdminLogin}
-          iconBgColor={theme.primarySoft}
-          iconColor={theme.primary}
-        />
+            <MenuItem
+              icon="log-out"
+              label="Logout"
+              desc="Keluar dari akun"
+              onPress={handleLogout}
+              iconBgColor={colors.errorSoft}
+              iconColor={colors.error}
+            />
+          </>
+        )}
 
-        {/* Footer */}
         <View style={styles.footer}>
           <Text variant="caption" style={{ color: theme.textMuted }}>
             Versi {Constants.expoConfig?.version || '1.0.0'}
