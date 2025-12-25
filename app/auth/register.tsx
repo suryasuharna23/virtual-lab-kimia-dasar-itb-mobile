@@ -211,7 +211,7 @@ export default function RegisterScreen() {
                 <View style={{ marginTop: spacing.md }}>
                 <Input
                     label="Email"
-                    placeholder="nama@student.itb.ac.id"
+                    placeholder="nama@mahasiswa.itb.ac.id"
                     value={formData.email}
                     onChangeText={(text) => handleChange('email', text)}
                     error={errors.email}

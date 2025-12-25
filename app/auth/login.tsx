@@ -105,7 +105,7 @@ export default function LoginScreen() {
             <Card style={styles.formCard}>
                 <Input
                 label="Email"
-                placeholder="nama@student.itb.ac.id"
+                placeholder="nama@mahasiswa.itb.ac.id"
                 value={email}
                 onChangeText={(text) => {
                     setEmail(text)
