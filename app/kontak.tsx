@@ -15,7 +15,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { Text, Card, Input, Button } from '@/components/ui'
 import { api } from '@/lib/api'
 import { endpoints } from '@/constants/api'
-import { layout, spacing, borderRadius, shadows } from '@/constants/theme'
+import { layout, spacing, borderRadius, shadows, colors } from '@/constants/theme'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 
 interface FormData {
@@ -180,16 +180,36 @@ export default function KontakScreen() {
                 </View>
 
                 <View style={{ marginTop: spacing.md }}>
-                <Input
-                    label="Pesan"
+                <Text variant="caption" weight="semibold" style={{ color: theme.textSecondary, marginBottom: spacing.xs }}>
+                  Pesan
+                </Text>
+                <View style={[
+                  styles.messageInputContainer, 
+                  { 
+                    backgroundColor: theme.surface, 
+                    borderColor: errors.message ? colors.error : theme.border 
+                  }
+                ]}>
+                  <Input
                     placeholder="Tulis pesan Anda di sini..."
                     value={formData.message}
                     onChangeText={(text) => setFormData({ ...formData, message: text })}
-                    error={errors.message}
                     multiline
                     numberOfLines={4}
-                    style={{ minHeight: 120, textAlignVertical: 'top', paddingTop: spacing.sm }}
-                />
+                    style={{ 
+                      minHeight: 100, 
+                      textAlignVertical: 'top', 
+                      paddingTop: 0,
+                      borderWidth: 0,
+                      backgroundColor: 'transparent'
+                    }}
+                  />
+                </View>
+                {errors.message && (
+                  <Text variant="caption" style={{ color: colors.error, marginTop: spacing.xs }}>
+                    {errors.message}
+                  </Text>
+                )}
                 </View>
 
                 <View style={{ marginTop: spacing.xl }}>
@@ -253,5 +273,11 @@ const styles = StyleSheet.create({
   formCard: {
     padding: spacing.xl,
     ...shadows.sm,
+  },
+  messageInputContainer: {
+    borderWidth: 1,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    minHeight: 120,
   },
 })

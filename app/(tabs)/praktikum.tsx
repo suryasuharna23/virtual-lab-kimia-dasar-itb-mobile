@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { Paths, File } from 'expo-file-system'
 import * as Sharing from 'expo-sharing'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useFocusEffect } from 'expo-router'
 import {
   Text,
   Card,
@@ -79,8 +80,14 @@ export default function PraktikumScreen() {
 
   useEffect(() => {
     fetchData()
-    loadOfflineFiles()
-  }, [fetchData, loadOfflineFiles])
+  }, [fetchData])
+
+  // Reload offline files when screen is focused (e.g., after deleting from offline-files screen)
+  useFocusEffect(
+    useCallback(() => {
+      loadOfflineFiles()
+    }, [loadOfflineFiles])
+  )
 
   const onRefresh = useCallback(() => {
     setRefreshing(true)
@@ -95,14 +102,23 @@ export default function PraktikumScreen() {
     if (isDownloaded(module.id)) {
       const offlineFile = offlineFiles.find(f => f.id === String(module.id))
       if (offlineFile) {
-        Alert.alert(
-          'File Sudah Diunduh',
-          'File ini sudah tersimpan offline.',
-          [
-            { text: 'OK', style: 'cancel' },
-            { text: 'Buka File', onPress: () => Sharing.shareAsync(offlineFile.localPath) }
-          ]
-        )
+        try {
+          const file = new File(offlineFile.localPath)
+          const exists = file.exists ?? false
+          if (!exists) {
+            const updatedFiles = offlineFiles.filter(f => f.id !== String(module.id))
+            await AsyncStorage.setItem(OFFLINE_FILES_KEY, JSON.stringify(updatedFiles))
+            setOfflineFiles(updatedFiles)
+            Alert.alert('File Tidak Ditemukan', 'File telah dihapus. Silakan unduh ulang.')
+            return
+          }
+          await Sharing.shareAsync(offlineFile.localPath)
+        } catch (error) {
+          const updatedFiles = offlineFiles.filter(f => f.id !== String(module.id))
+          await AsyncStorage.setItem(OFFLINE_FILES_KEY, JSON.stringify(updatedFiles))
+          setOfflineFiles(updatedFiles)
+          Alert.alert('File Tidak Ditemukan', 'File telah dihapus. Silakan unduh ulang.')
+        }
       }
       return
     }
@@ -170,14 +186,23 @@ export default function PraktikumScreen() {
     if (isDownloaded(`group_${group.id}`)) {
       const offlineFile = offlineFiles.find(f => f.id === `group_${group.id}`)
       if (offlineFile) {
-        Alert.alert(
-          'File Sudah Diunduh',
-          'File ini sudah tersimpan offline.',
-          [
-            { text: 'OK', style: 'cancel' },
-            { text: 'Buka File', onPress: () => Sharing.shareAsync(offlineFile.localPath) }
-          ]
-        )
+        try {
+          const file = new File(offlineFile.localPath)
+          const exists = file.exists ?? false
+          if (!exists) {
+            const updatedFiles = offlineFiles.filter(f => f.id !== `group_${group.id}`)
+            await AsyncStorage.setItem(OFFLINE_FILES_KEY, JSON.stringify(updatedFiles))
+            setOfflineFiles(updatedFiles)
+            Alert.alert('File Tidak Ditemukan', 'File telah dihapus. Silakan unduh ulang.')
+            return
+          }
+          await Sharing.shareAsync(offlineFile.localPath)
+        } catch (error) {
+          const updatedFiles = offlineFiles.filter(f => f.id !== `group_${group.id}`)
+          await AsyncStorage.setItem(OFFLINE_FILES_KEY, JSON.stringify(updatedFiles))
+          setOfflineFiles(updatedFiles)
+          Alert.alert('File Tidak Ditemukan', 'File telah dihapus. Silakan unduh ulang.')
+        }
       }
       return
     }
@@ -325,7 +350,7 @@ export default function PraktikumScreen() {
             Praktikum
           </Text>
           <Text variant="body" style={{ color: theme.textSecondary }}>
-            Selesaikan semua modul untuk menjadi ahli kimia! 🧪
+            Jangan lupa pelajari modul praktikum 
           </Text>
         </View>
 

@@ -65,12 +65,18 @@ const faqData: FAQItem[] = [
 export default function FAQScreen() {
   const { theme } = useTheme()
   const router = useRouter()
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(null)
+  const [expandedIndexes, setExpandedIndexes] = useState<number[]>([])
 
   const toggleExpand = (index: number) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpandedIndex(expandedIndex === index ? null : index)
+    setExpandedIndexes(prev => 
+      prev.includes(index) 
+        ? prev.filter(i => i !== index) 
+        : [...prev, index]
+    )
   }
+
+  const isExpanded = (index: number) => expandedIndexes.includes(index)
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
@@ -105,12 +111,12 @@ export default function FAQScreen() {
                     {item.question}
                 </Text>
                 <Ionicons
-                    name={expandedIndex === index ? 'chevron-up' : 'chevron-down'}
+                    name={isExpanded(index) ? 'chevron-up' : 'chevron-down'}
                     size={20}
                     color={theme.primary}
                 />
                 </View>
-                {expandedIndex === index && (
+                {isExpanded(index) && (
                 <View style={[styles.answerContainer, { borderTopColor: theme.border }]}>
                     <Text variant="body" style={{ color: theme.textSecondary, lineHeight: 22 }}>
                     {item.answer}
