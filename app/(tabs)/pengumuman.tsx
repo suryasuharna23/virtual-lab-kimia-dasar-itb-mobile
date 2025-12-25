@@ -106,7 +106,7 @@ export default function PengumumanScreen() {
             ...styles.card,
             ...(item.is_important ? { borderColor: colors.warning, borderWidth: 1 } : {})
         }}
-        onPress={() => router.push(`/pengumuman?id=${item.id}` as any)}
+        onPress={() => router.push(`/pengumuman/${item.id}` as any)}
       >
         <View style={styles.cardHeader}>
           <View style={styles.headerTop}>

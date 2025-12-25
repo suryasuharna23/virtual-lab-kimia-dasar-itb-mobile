@@ -122,7 +122,6 @@ export default function HomeScreen() {
             level={getAttendanceLevel()}
             avatarUrl={student?.avatar_url}
             onNotificationPress={() => Alert.alert('Notifikasi', 'Tidak ada notifikasi baru')}
-            onGiftPress={() => router.push('/nametag' as any)}
           />
 
           <View style={{ marginBottom: spacing.xl }}>

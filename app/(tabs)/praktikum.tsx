@@ -5,13 +5,16 @@ import {
   RefreshControl,
   StyleSheet,
   Alert,
+  TouchableOpacity,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+import { Paths, File } from 'expo-file-system'
+import * as Sharing from 'expo-sharing'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import {
   Text,
   Card,
-  Button,
   LoadingSpinner,
   Badge,
 } from '@/components/ui'
@@ -22,12 +25,25 @@ import type { Module, Group } from '@/types'
 import { layout, spacing, borderRadius, colors, shadows } from '@/constants/theme'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 
+const OFFLINE_FILES_KEY = 'offline_files'
+
+interface OfflineFile {
+  id: string
+  name: string
+  localPath: string
+  type: 'module' | 'group'
+  downloadedAt: string
+  size: number
+}
+
 export default function PraktikumScreen() {
   const { theme } = useTheme()
   const [modules, setModules] = useState<Module[]>([])
   const [groups, setGroups] = useState<Group[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [downloadingId, setDownloadingId] = useState<string | number | null>(null)
+  const [offlineFiles, setOfflineFiles] = useState<OfflineFile[]>([])
 
   const fetchData = useCallback(async () => {
     try {
@@ -50,17 +66,99 @@ export default function PraktikumScreen() {
     }
   }, [])
 
+  const loadOfflineFiles = useCallback(async () => {
+    try {
+      const stored = await AsyncStorage.getItem(OFFLINE_FILES_KEY)
+      if (stored) {
+        setOfflineFiles(JSON.parse(stored))
+      }
+    } catch (error) {
+      console.error('Error loading offline files:', error)
+    }
+  }, [])
+
   useEffect(() => {
     fetchData()
-  }, [fetchData])
+    loadOfflineFiles()
+  }, [fetchData, loadOfflineFiles])
 
   const onRefresh = useCallback(() => {
     setRefreshing(true)
     fetchData()
   }, [fetchData])
 
-  const handleDownloadModule = async (moduleId: string | number) => {
-    Alert.alert('Download', 'Fitur unduh akan segera tersedia.')
+  const isDownloaded = (id: string | number) => {
+    return offlineFiles.some(f => f.id === String(id))
+  }
+
+  const handleDownloadModule = async (module: Module) => {
+    if (isDownloaded(module.id)) {
+      Alert.alert(
+        'File Sudah Diunduh',
+        'File ini sudah tersimpan offline. Buka di halaman Offline Files?',
+        [
+          { text: 'Batal', style: 'cancel' },
+          { text: 'Lihat', onPress: () => {} }
+        ]
+      )
+      return
+    }
+
+    try {
+      setDownloadingId(module.id)
+      
+      const response = await api.get<{ download_url: string; expires_at: string }>(
+        endpoints.modules.download(module.id)
+      )
+      
+      if (!response.success || !response.data?.download_url) {
+        throw new Error('Gagal mendapatkan URL download')
+      }
+
+      const downloadUrl = response.data.download_url
+      const fileName = `modul_${module.id}_${Date.now()}.pdf`
+      const file = new File(Paths.cache, fileName)
+      
+      const fetchResponse = await fetch(downloadUrl)
+      if (!fetchResponse.ok) {
+        throw new Error('Download gagal')
+      }
+      
+      const blob = await fetchResponse.blob()
+      const arrayBuffer = await blob.arrayBuffer()
+      const uint8Array = new Uint8Array(arrayBuffer)
+      file.write(uint8Array)
+
+      const newOfflineFile: OfflineFile = {
+        id: String(module.id),
+        name: module.title,
+        localPath: file.uri,
+        type: 'module',
+        downloadedAt: new Date().toISOString(),
+        size: module.file_size || 0,
+      }
+
+      const updatedFiles = [...offlineFiles, newOfflineFile]
+      await AsyncStorage.setItem(OFFLINE_FILES_KEY, JSON.stringify(updatedFiles))
+      setOfflineFiles(updatedFiles)
+
+      Alert.alert(
+        'Berhasil! ✓',
+        `${module.title} berhasil diunduh dan tersimpan offline.`,
+        [
+          { text: 'OK' },
+          { 
+            text: 'Buka File', 
+            onPress: () => Sharing.shareAsync(file.uri)
+          }
+        ]
+      )
+    } catch (error) {
+      console.error('Download error:', error)
+      Alert.alert('Gagal', 'Tidak dapat mengunduh file. Coba lagi nanti.')
+    } finally {
+      setDownloadingId(null)
+    }
   }
 
   const StatCard = ({
@@ -188,67 +286,77 @@ export default function PraktikumScreen() {
               </Text>
             </View>
           ) : (
-            modules.map((item, index) => (
-              <Animated.View 
-                key={item.id} 
-                entering={FadeInDown.delay(200 + (index * 100)).springify()}
-              >
-                <Card 
-                    style={styles.card}
-                    onPress={() => handleDownloadModule(item.id)}
+            modules.map((item, index) => {
+              const isDownloading = downloadingId === item.id
+              const downloaded = isDownloaded(item.id)
+              
+              return (
+                <Animated.View 
+                  key={item.id} 
+                  entering={FadeInDown.delay(200 + (index * 100)).springify()}
                 >
-                  <View style={styles.cardContent}>
-                    <View style={{
-                        width: 56,
-                        height: 56,
-                        borderRadius: borderRadius.xl,
-                        backgroundColor: index % 2 === 0 ? theme.primary + '15' : theme.accent + '15',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                    }}>
-                        <Text style={{ 
-                            fontSize: 24, 
-                            fontWeight: '800', 
-                            color: index % 2 === 0 ? theme.primary : theme.accent 
-                        }}>
-                            {index + 1}
+                  <Card style={styles.card}>
+                    <View style={styles.cardContent}>
+                      <View style={styles.moduleNumber}>
+                        <Text style={[
+                          styles.moduleNumberText,
+                          { color: index % 2 === 0 ? theme.primary : theme.accent }
+                        ]}>
+                          {index + 1}
                         </Text>
-                    </View>
-                    
-                    <View style={{ flex: 1, gap: 4 }}>
-                      <Text
-                        variant="bodyLarge"
-                        style={{ color: theme.textPrimary, fontWeight: '700' }}
-                      >
-                        {item.title}
-                      </Text>
-                      <Text
-                        variant="caption"
-                        style={{ color: theme.textSecondary }}
-                        numberOfLines={2}
-                      >
-                        {item.description || 'Tidak ada deskripsi'}
-                      </Text>
-                      
-                      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-                         <Badge variant="info" size="sm">
-                            {item.file_size ? `${(item.file_size / 1024 / 1024).toFixed(1)} MB` : 'PDF'}
-                         </Badge>
                       </View>
+                      
+                      <View style={styles.moduleInfo}>
+                        <Text
+                          variant="bodyLarge"
+                          style={{ color: theme.textPrimary, fontWeight: '700' }}
+                          numberOfLines={1}
+                        >
+                          {item.title}
+                        </Text>
+                        <Text
+                          variant="caption"
+                          style={{ color: theme.textSecondary }}
+                          numberOfLines={2}
+                        >
+                          {item.description || 'Tidak ada deskripsi'}
+                        </Text>
+                        
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 8 }}>
+                          <Badge variant="info" size="sm">
+                            {item.file_size ? `${(item.file_size / 1024 / 1024).toFixed(1)} MB` : 'PDF'}
+                          </Badge>
+                          {downloaded && (
+                            <Badge variant="success" size="sm">
+                              Tersimpan
+                            </Badge>
+                          )}
+                        </View>
+                      </View>
+                      
+                      <TouchableOpacity
+                        onPress={() => handleDownloadModule(item)}
+                        disabled={isDownloading}
+                        style={[
+                          styles.downloadButton,
+                          { backgroundColor: downloaded ? colors.successSoft : theme.primarySoft }
+                        ]}
+                      >
+                        {isDownloading ? (
+                          <LoadingSpinner size="sm" color={theme.primary} />
+                        ) : (
+                          <Ionicons 
+                            name={downloaded ? "checkmark-circle" : "cloud-download-outline"} 
+                            size={24} 
+                            color={downloaded ? colors.success : theme.primary} 
+                          />
+                        )}
+                      </TouchableOpacity>
                     </View>
-                    
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onPress={() => handleDownloadModule(item.id)}
-                        style={{ height: 40, width: 40, paddingHorizontal: 0 }}
-                    >
-                        <Ionicons name="cloud-download-outline" size={24} color={theme.primary} />
-                    </Button>
-                  </View>
-                </Card>
-              </Animated.View>
-            ))
+                  </Card>
+                </Animated.View>
+              )
+            })
           )}
         </View>
 
@@ -303,17 +411,15 @@ export default function PraktikumScreen() {
                             </Text>
                         </View>
                       </View>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onPress={() => handleDownloadModule(group.id)}
+                      <TouchableOpacity
+                        style={[styles.downloadButton, { backgroundColor: colors.infoSoft }]}
                       >
                         <Ionicons
                           name="download-outline"
                           size={24}
                           color={colors.info}
                         />
-                      </Button>
+                      </TouchableOpacity>
                     </View>
                   </Card>
               </Animated.View>
@@ -348,12 +454,6 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     marginBottom: layout.sectionGap,
   },
-  statCard: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.md,
-      padding: spacing.md,
-  },
   section: {
     marginBottom: layout.sectionGap,
   },
@@ -370,6 +470,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
+  },
+  moduleNumber: {
+    width: 48,
+    height: 48,
+    borderRadius: borderRadius.lg,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  moduleNumberText: {
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  moduleInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  downloadButton: {
+    width: 44,
+    height: 44,
+    borderRadius: borderRadius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyState: {
     padding: spacing.xl,

@@ -36,10 +36,10 @@ export function CourseCard({
           borderRadius: borderRadius['2xl'],
           padding: spacing.lg,
           width: 160,
+          height: 180,
           marginRight: spacing.md,
-          ...shadows.sm // Soft shadow
+          ...shadows.sm
         },
-        // Fallback shadow in case spread doesn't work well or needs override
         {
             shadowColor: theme.textPrimary,
             shadowOpacity: 0.05,
@@ -59,16 +59,15 @@ export function CourseCard({
         <Ionicons name={iconName} size={24} color={iconColor || theme.primary} />
       </View>
 
-      <Text variant="body" weight="bold" style={{ marginBottom: spacing.md }} numberOfLines={2}>
+      <Text variant="body" weight="bold" style={{ marginBottom: spacing.md, flex: 1 }} numberOfLines={2}>
         {title}
       </Text>
 
-      <View style={{ marginBottom: spacing.xs }}>
+      <View>
          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
             <Text variant="caption" color="secondary">Progress</Text>
             <Text variant="caption" weight="bold">{Math.round(progress * 100)}%</Text>
          </View>
-         {/* Simple Progress Bar */}
          <View style={{ height: 6, backgroundColor: theme.border, borderRadius: 3, overflow: 'hidden' }}>
             <View style={{ width: `${progress * 100}%`, height: '100%', backgroundColor: iconColor || theme.primary, borderRadius: 3 }} />
          </View>

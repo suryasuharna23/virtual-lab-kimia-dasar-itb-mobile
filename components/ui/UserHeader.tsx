@@ -11,7 +11,6 @@ interface UserHeaderProps {
   level: string
   avatarUrl?: string
   onNotificationPress?: () => void
-  onGiftPress?: () => void
 }
 
 export function UserHeader({
@@ -19,14 +18,12 @@ export function UserHeader({
   level,
   avatarUrl,
   onNotificationPress,
-  onGiftPress,
 }: UserHeaderProps) {
   const { theme } = useTheme()
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        {/* Avatar */}
         <View style={{ 
           width: 48, 
           height: 48, 
@@ -49,7 +46,6 @@ export function UserHeader({
           )}
         </View>
 
-        {/* Name and Level */}
         <View>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Text variant="h4" weight="bold" style={{ marginRight: spacing.sm }}>
@@ -67,33 +63,17 @@ export function UserHeader({
         </View>
       </View>
 
-      {/* Actions */}
-      <View style={{ flexDirection: 'row' }}>
-        <TouchableOpacity 
-          onPress={onGiftPress}
-          style={{ 
-            padding: spacing.sm,
-            backgroundColor: theme.surface,
-            borderRadius: borderRadius.full,
-            marginRight: spacing.sm,
-            ...shadows.sm
-          }}
-        >
-          <Ionicons name="gift-outline" size={24} color={theme.textPrimary} />
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          onPress={onNotificationPress}
-          style={{ 
-            padding: spacing.sm,
-            backgroundColor: theme.surface,
-            borderRadius: borderRadius.full,
-            ...shadows.sm
-          }}
-        >
-          <Ionicons name="notifications-outline" size={24} color={theme.textPrimary} />
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity 
+        onPress={onNotificationPress}
+        style={{ 
+          padding: spacing.sm,
+          backgroundColor: theme.surface,
+          borderRadius: borderRadius.full,
+          ...shadows.sm
+        }}
+      >
+        <Ionicons name="notifications-outline" size={24} color={theme.textPrimary} />
+      </TouchableOpacity>
     </View>
   )
 }
