@@ -1,266 +1,121 @@
-import React from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { useRouter } from 'expo-router';
-
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-
-type Practicum = {
-  id: 'titrasi' | 'redoks' | 'gravimetri' | 'buffer';
-  title: string;
-  desc: string;
-  accent: string;
-};
-
-const PRACTICUMS: Practicum[] = [
-  {
-    id: 'titrasi',
-    title: 'Titrasi Asam-Basa',
-    desc: 'Praktikum titrasi untuk menentukan konsentrasi larutan',
-    accent: '#3b82f6',
-  },
-  {
-    id: 'redoks',
-    title: 'Reaksi Redoks',
-    desc: 'Praktikum reaksi oksidasi dan reduksi',
-    accent: '#ef4444',
-  },
-  {
-    id: 'gravimetri',
-    title: 'Analisis Gravimetri',
-    desc: 'Praktikum analisis berdasarkan massa',
-    accent: '#f59e0b',
-  },
-  {
-    id: 'buffer',
-    title: 'Larutan Buffer',
-    desc: 'Praktikum pembuatan dan pengujian larutan penyangga',
-    accent: '#22c55e',
-  },
-];
+import React, { useEffect } from 'react'
+import { StyleSheet, View, Alert } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { Ionicons } from '@expo/vector-icons'
+import { Text, Button, Badge } from '@/components/ui'
+import { useTheme } from '@/contexts/ThemeContext'
+import { spacing, layout } from '@/constants/theme'
+import Animated, { 
+    useSharedValue, 
+    useAnimatedStyle, 
+    withRepeat, 
+    withTiming, 
+    Easing,
+    FadeInDown
+} from 'react-native-reanimated'
 
 export default function VirtualLabScreen() {
-  const router = useRouter();
+  const { theme } = useTheme()
+  const rotation = useSharedValue(0)
+  const float = useSharedValue(0)
+
+  useEffect(() => {
+    rotation.value = withRepeat(
+        withTiming(10, { duration: 2000, easing: Easing.inOut(Easing.ease) }), 
+        -1, 
+        true
+    )
+    
+    float.value = withRepeat(
+        withTiming(10, { duration: 1500, easing: Easing.inOut(Easing.quad) }),
+        -1,
+        true
+    )
+  }, [])
+
+  const animatedIconStyle = useAnimatedStyle(() => ({
+      transform: [{ translateY: float.value }]
+  }))
 
   return (
-    <ThemedView style={[styles.container, { backgroundColor: '#f8fafc' }]}> 
-      <ScrollView contentContainerStyle={styles.scrollBody}>
-        <View style={styles.hero}>
-          <View style={styles.heroBadge}>
-            <ThemedText style={styles.heroBadgeText}>Laboratorium Kimia Dasar ITB</ThemedText>
-          </View>
-          <ThemedText type="title" style={styles.title}>Virtual Lab</ThemedText>
-          <ThemedText style={styles.subtitle}>
-            Pilih praktikum, lalu lanjut ke simulasi dengan preset alat dan reagen sesuai skenario.
-          </ThemedText>
-          <View style={styles.heroActions}>
-            <Pressable style={styles.primaryButton} onPress={() => router.push('/virtual-lab-sim?practicum=titrasi')}>
-              <ThemedText style={styles.primaryButtonText}>Mulai dengan titrasi</ThemedText>
-            </Pressable>
-            <Pressable style={styles.ghostButton} onPress={() => router.push('/virtual-lab-sim')}>
-              <ThemedText style={styles.ghostButtonText}>Lewati pemilihan</ThemedText>
-            </Pressable>
-          </View>
-        </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={styles.content}>
+        <Animated.View style={[styles.iconContainer, animatedIconStyle]}>
+            <View style={[styles.iconCircle, { backgroundColor: theme.primarySoft }]}>
+                <Ionicons name="flask" size={80} color={theme.primary} />
+            </View>
+            <View style={[styles.bubble, { top: 0, right: 10, backgroundColor: theme.accent }]} />
+            <View style={[styles.bubble, { top: 20, left: 0, backgroundColor: theme.accent, width: 12, height: 12 }]} />
+        </Animated.View>
 
-        <View style={styles.practicumHeader}>
-          <ThemedText type="subtitle" style={styles.workspaceTitle}>Pilih Praktikum</ThemedText>
-          <ThemedText style={styles.legendHint}>Tap salah satu kartu untuk memuat setup awal.</ThemedText>
-        </View>
-        <View style={styles.practicumGrid}>
-          {PRACTICUMS.map((p) => {
-            return (
-              <Pressable
-                key={p.id}
-                style={styles.practicumCard}
-                onPress={() => router.push(`/virtual-lab-sim?practicum=${p.id}`)}>
-                <View style={[styles.practicumPill, { backgroundColor: `${p.accent}22` }]}> 
-                  <ThemedText style={[styles.practicumPillText, { color: p.accent }]}>
-                    {p.title.split(' ')[0]}
-                  </ThemedText>
-                </View>
-                <ThemedText type="defaultSemiBold" style={styles.practicumTitle}>{p.title}</ThemedText>
-                <ThemedText style={styles.cardDesc}>{p.desc}</ThemedText>
-                <ThemedText style={styles.cardLink}>Muat skenario</ThemedText>
-              </Pressable>
-            );
-          })}
-        </View>
+        <Animated.View entering={FadeInDown.delay(300).springify()} style={{ alignItems: 'center' }}>
+            <Badge variant="warning" size="md" style={{ marginBottom: spacing.md }}>
+                COMING SOON
+            </Badge>
+            
+            <Text variant="h1" style={{ textAlign: 'center', marginBottom: spacing.sm, fontWeight: '800', color: theme.textPrimary }}>
+                Lab Virtual
+            </Text>
+            
+            <Text variant="bodyLarge" style={{ textAlign: 'center', color: theme.textSecondary, marginBottom: spacing.xl, maxWidth: '80%' }}>
+                Kami sedang meracik bahan kimia digital untuk pengalaman praktikum yang aman dan seru! 🧪✨
+            </Text>
+        </Animated.View>
 
-        <ThemedText style={styles.selectionHint}>
-          Setelah memilih, Anda akan diarahkan ke halaman simulasi dengan preset sesuai praktikum.
-        </ThemedText>
-      </ScrollView>
-    </ThemedView>
-  );
+        <Animated.View entering={FadeInDown.delay(500).springify()} style={{ width: '100%', maxWidth: 300 }}>
+            <Button 
+                variant="primary" 
+                size="lg" 
+                fullWidth
+                onPress={() => Alert.alert("Notifikasi Diaktifkan", "Kami akan memberi tahu Anda saat Lab Virtual siap!")}
+                leftIcon={<Ionicons name="notifications-outline" size={20} color="#fff" />}
+            >
+                Beri Tahu Saya
+            </Button>
+            
+            <Button 
+                variant="ghost" 
+                size="md" 
+                fullWidth 
+                style={{ marginTop: spacing.md }}
+                onPress={() => Alert.alert("Info", "Fitur ini akan mencakup simulasi titrasi, pencampuran larutan, dan reaksi kimia dasar.")}
+            >
+                Pelajari Lebih Lanjut
+            </Button>
+        </Animated.View>
+      </View>
+    </SafeAreaView>
+  )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scrollBody: {
-    padding: 20,
-    gap: 18,
-  },
-  hero: {
-    backgroundColor: '#0f172a',
-    borderRadius: 16,
-    padding: 16,
-    gap: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.2)',
-  },
-  heroBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(45, 212, 191, 0.15)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(45, 212, 191, 0.3)',
-  },
-  heroBadgeText: {
-    color: '#2dd4bf',
-    fontWeight: '700',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#0f172a',
-  },
-  heroActions: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  primaryButton: {
-    backgroundColor: '#14b8a6',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 12,
-  },
-  primaryButtonText: {
-    color: '#ffffff',
-    fontWeight: '700',
-  },
-  ghostButton: {
-    borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.6)',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 12,
-    backgroundColor: '#0f172a',
-  },
-  ghostButtonText: {
-    color: '#e2e8f0',
-    fontWeight: '700',
-  },
-  subtitle: {
-    color: '#e2e8f0',
-  },
-  legendRow: {
-    flexDirection: 'row',
+  content: {
+    flex: 1,
     alignItems: 'center',
-    gap: 10,
-    flexWrap: 'wrap',
+    justifyContent: 'center',
+    padding: layout.screenPaddingHorizontal,
   },
-  legendChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
+  iconContainer: {
+    position: 'relative',
+    marginBottom: spacing.xl,
   },
-  legendChipText: {
-    fontWeight: '700',
-  },
-  legendHint: {
-    color: 'rgba(15, 23, 42, 0.65)',
-  },
-  workspaceCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.06)',
-    shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 2,
-  },
-  workspaceHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  iconCircle: {
+    width: 160,
+    height: 160,
+    borderRadius: 80,
     alignItems: 'center',
-    marginBottom: 8,
+    justifyContent: 'center',
+    borderWidth: 4,
+    borderColor: 'rgba(0,0,0,0.05)',
   },
-  workspaceTitle: {
-    fontWeight: '700',
-    color: '#0f172a',
-  },
-  workspaceMeta: {
-    color: 'rgba(15, 23, 42, 0.55)',
-  },
-  practicumHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  practicumGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  practicumCard: {
-    flexBasis: '48%',
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
-    shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 2,
-    gap: 6,
-  },
-  practicumTitle: {
-    fontSize: 16,
-    color: '#0f172a',
-  },
-  practicumPill: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-  },
-  practicumPillText: {
-    fontWeight: '700',
-  },
-  selectionBadge: {
-    marginTop: 8,
-    backgroundColor: '#e0f2fe',
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(14,165,233,0.4)',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  selectionText: {
-    color: '#0f172a',
-    fontWeight: '700',
-  },
-  cardDesc: {
-    color: 'rgba(15, 23, 42, 0.75)',
-  },
-  cardLink: {
-    color: '#0ea5e9',
-    fontWeight: '700',
-  },
-  selectionHint: {
-    marginTop: 8,
-    color: 'rgba(15, 23, 42, 0.65)',
-  },
-});
+  bubble: {
+    position: 'absolute',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    opacity: 0.8,
+  }
+})

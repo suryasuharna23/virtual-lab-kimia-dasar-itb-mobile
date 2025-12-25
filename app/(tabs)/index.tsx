@@ -1,147 +1,236 @@
-import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react'
+import {
+  View,
+  ScrollView,
+  RefreshControl,
+  StyleSheet,
+  Alert,
+} from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { useRouter } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
+import { useTheme } from '@/contexts/ThemeContext'
+import { useAuth } from '@/contexts/AuthContext'
+import { 
+  Text, 
+  UserHeader, 
+  AttendanceCard,
+  CourseCard,
+  Card
+} from '@/components/ui'
+import type { PraktikumSession } from '@/components/ui/AttendanceCard'
+import { layout, spacing, colors } from '@/constants/theme'
+import Animated, { FadeInDown } from 'react-native-reanimated'
+import { api } from '@/lib/api'
+import { endpoints } from '@/constants/api'
+import { Module, Student } from '@/types'
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+const DUMMY_SESSIONS: PraktikumSession[] = [
+  { id: '1', moduleNumber: 1, moduleName: 'Pengenalan Lab', date: '2025-02-10', attended: true },
+  { id: '2', moduleNumber: 2, moduleName: 'Titrasi Asam Basa', date: '2025-02-17', attended: true },
+  { id: '3', moduleNumber: 3, moduleName: 'Reaksi Redoks', date: '2025-02-24', attended: true },
+  { id: '4', moduleNumber: 4, moduleName: 'Termokimia', date: '2025-03-03', attended: false },
+  { id: '5', moduleNumber: 5, moduleName: 'Laju Reaksi', date: '2025-03-10', attended: false },
+  { id: '6', moduleNumber: 6, moduleName: 'Larutan Koloid', date: '2025-03-17', attended: false },
+  { id: '7', moduleNumber: 7, moduleName: 'Analisis Kualitatif', date: '2025-03-24', attended: false },
+]
 
 export default function HomeScreen() {
-  const router = useRouter();
+  const { theme } = useTheme()
+  const { user } = useAuth()
+  const router = useRouter()
+  const [refreshing, setRefreshing] = useState(false)
+  const [modules, setModules] = useState<Module[]>([])
+  const [sessions, setSessions] = useState<PraktikumSession[]>(DUMMY_SESSIONS)
+
+  const student = user as Student | null
+
+  const fetchModules = useCallback(async () => {
+    try {
+      const response = await api.get<Module[]>(endpoints.modules.list)
+      if (response.success && response.data) {
+        setModules(response.data)
+      }
+    } catch (error) {
+      console.log('Failed to fetch modules:', error)
+    }
+  }, [])
+
+  const fetchData = useCallback(async () => {
+    setRefreshing(true)
+    await fetchModules()
+    setRefreshing(false)
+  }, [fetchModules])
+
+  useEffect(() => {
+    fetchModules()
+  }, [fetchModules])
+
+  const onRefresh = useCallback(() => {
+    fetchData()
+  }, [fetchData])
+
+  const getUserDisplayName = () => {
+    if (!student) return 'Mahasiswa'
+    return student.full_name?.split(' ')[0] || 'Mahasiswa'
+  }
+
+  const getAttendanceLevel = () => {
+    const attended = sessions.filter(s => s.attended).length
+    const total = sessions.length
+    if (total === 0) return 'Initium'
+    const percentage = (attended / total) * 100
+    if (percentage >= 75) return 'Excellentia'
+    if (percentage >= 50) return 'Harmonia'
+    if (percentage >= 25) return 'Progressio'
+    return 'Initium'
+  }
+
+  const getModuleIcon = (index: number): string => {
+    const icons = ['flask', 'color-filter', 'sync', 'beaker', 'analytics']
+    return icons[index % icons.length]
+  }
+
+  const getModuleColor = (index: number): string => {
+    const moduleColors = [colors.info, colors.warning, colors.success, colors.error, colors.primary]
+    return moduleColors[index % moduleColors.length]
+  }
 
   return (
-    <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.body}>
-        <View style={styles.hero}>
-          <ThemedText type="title" style={styles.title}>
-            Virtual Lab Kimia Dasar
-          </ThemedText>
-          <ThemedText style={styles.lead}>
-            Praktikum digital dengan estetika laboratorium modern ITB: susun alat, pilih reagen,
-            dan ikuti skenario titrasi, redoks, serta gravimetri.
-          </ThemedText>
-          <View style={styles.actionRow}>
-            <Pressable style={styles.primary} onPress={() => router.push('/(tabs)/virtual-lab')}>
-              <ThemedText style={styles.primaryText}>Masuk ke workbench</ThemedText>
-            </Pressable>
-            <Pressable style={styles.secondary} onPress={() => router.push('/(tabs)/about-lab')}>
-              <ThemedText style={styles.secondaryText}>Panduan & tips</ThemedText>
-            </Pressable>
-          </View>
-        </View>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.background }]}
+      edges={['top']}
+    >
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={theme.primary}
+          />
+        }
+        contentContainerStyle={{ paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.content}>
+          
+          <UserHeader 
+            name={getUserDisplayName()} 
+            level={getAttendanceLevel()}
+            avatarUrl={student?.avatar_url}
+            onNotificationPress={() => Alert.alert('Notifikasi', 'Tidak ada notifikasi baru')}
+          />
 
-        <View style={styles.cardGrid}>
-          <InfoCard
-            title="Visual alat nyata"
-            desc="Beaker, erlen, buret, dan batang pengaduk divisualkan dengan bentuk khasnya."
-            onPress={() => router.push('/(tabs)/virtual-lab')}
-          />
-          <InfoCard
-            title="Preset titrasi"
-            desc="Sekali tap untuk memuat setup titrasi, lalu drag untuk penyesuaian." 
-            onPress={() => router.push('/(tabs)/virtual-lab')}
-          />
-          <InfoCard
-            title="Keamanan terpandu"
-            desc="Hazard label warna-warni untuk korosif, oksidator, mudah terbakar, dan APD."
-            onPress={() => router.push('/(tabs)/virtual-lab')}
-          />
+          <View style={{ marginBottom: spacing.xl }}>
+            <Text variant="h1" weight="bold" style={{ color: theme.textPrimary, marginBottom: spacing.xs }}>
+              Halo, {getUserDisplayName()}! 👋
+            </Text>
+            <Text variant="body" style={{ color: theme.textSecondary }}>
+              Siap untuk praktikum kimia hari ini?
+            </Text>
+          </View>
+
+          <Animated.View entering={FadeInDown.delay(100).springify()}>
+            <AttendanceCard 
+              sessions={sessions}
+              onShowNametagPress={() => router.push('/nametag' as any)}
+              style={{ marginBottom: spacing.xl }}
+            />
+          </Animated.View>
+
+          <View style={{ marginBottom: spacing.xl }}>
+             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md }}>
+                <Text variant="h3" weight="bold" style={{ color: theme.textPrimary }}>
+                  Modul Praktikum
+                </Text>
+                <Text 
+                  variant="bodySmall" 
+                  weight="bold" 
+                  style={{ color: theme.primary }}
+                  onPress={() => router.push('/praktikum' as any)}
+                >
+                  Lihat semua
+                </Text>
+             </View>
+          </View>
+
+          <ScrollView 
+             horizontal 
+             showsHorizontalScrollIndicator={false}
+             contentContainerStyle={{ paddingHorizontal: layout.screenPaddingHorizontal }}
+             style={{ marginHorizontal: -layout.screenPaddingHorizontal, marginBottom: spacing.xl }}
+          >
+            {modules.length > 0 ? (
+              modules.slice(0, 5).map((module, index) => (
+                <Animated.View 
+                   key={module.id} 
+                   entering={FadeInDown.delay(200 + (index * 100)).springify()}
+                >
+                  <CourseCard 
+                    title={module.title}
+                    iconName={getModuleIcon(index) as any}
+                    iconColor={colors.white}
+                    iconBgColor={getModuleColor(index)}
+                    onPress={() => router.push('/praktikum' as any)}
+                  />
+                </Animated.View>
+              ))
+            ) : (
+              <Animated.View entering={FadeInDown.delay(200).springify()}>
+                <Card style={{ 
+                  width: 200, 
+                  height: 76, 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  marginRight: spacing.md 
+                }}>
+                  <Ionicons name="cloud-offline-outline" size={32} color={theme.textMuted} />
+                  <Text variant="bodySmall" style={{ color: theme.textMuted, marginTop: spacing.sm, textAlign: 'center' }}>
+                    Belum ada modul.{'\n'}Tarik untuk refresh.
+                  </Text>
+                </Card>
+              </Animated.View>
+            )}
+          </ScrollView>
+
+          <View>
+            <Text variant="h3" weight="bold" style={{ color: theme.textPrimary, marginBottom: spacing.md }}>
+               Menu Lainnya
+            </Text>
+            <View style={{ flexDirection: 'row', gap: spacing.md }}>
+                <Card 
+                  onPress={() => router.push('/nametag' as any)}
+                  style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: 120 }}
+                >
+                    <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: colors.successSoft, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm }}>
+                       <Ionicons name="qr-code" size={28} color={colors.success} />
+                    </View>
+                    <Text weight="bold">Nametag</Text>
+                </Card>
+                <Card 
+                  onPress={() => router.push('/pengumuman' as any)}
+                  style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: 120 }}
+                >
+                     <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: colors.infoSoft, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm }}>
+                       <Ionicons name="megaphone" size={28} color={colors.info} />
+                    </View>
+                    <Text weight="bold">Pengumuman</Text>
+                </Card>
+            </View>
+          </View>
+
         </View>
       </ScrollView>
-    </ThemedView>
-  );
-}
-
-function InfoCard({ title, desc, onPress }: { title: string; desc: string; onPress: () => void }) {
-  return (
-    <Pressable style={styles.card} onPress={onPress}>
-      <ThemedText type="defaultSemiBold" style={styles.cardTitle}>
-        {title}
-      </ThemedText>
-      <ThemedText style={styles.cardDesc}>{desc}</ThemedText>
-      <ThemedText style={styles.cardLink}>Lihat detail</ThemedText>
-    </Pressable>
-  );
+    </SafeAreaView>
+  )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
   },
-  body: {
-    padding: 20,
-    gap: 16,
+  content: {
+    paddingHorizontal: layout.screenPaddingHorizontal,
+    paddingVertical: spacing.lg,
   },
-  hero: {
-    backgroundColor: '#0f172a',
-    borderRadius: 16,
-    padding: 16,
-    gap: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.35)',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#22d3ee',
-  },
-  lead: {
-    color: '#e2e8f0',
-  },
-  actionRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  primary: {
-    backgroundColor: '#14b8a6',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-  },
-  primaryText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  secondary: {
-    borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.6)',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    backgroundColor: '#0f172a',
-  },
-  secondaryText: {
-    fontWeight: '700',
-    color: '#e2e8f0',
-  },
-  cardGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  card: {
-    flexBasis: '48%',
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(15, 23, 42, 0.08)',
-    shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 2,
-    gap: 6,
-  },
-  cardTitle: {
-    fontSize: 16,
-    color: '#0f172a',
-  },
-  cardDesc: {
-    color: 'rgba(15, 23, 42, 0.7)',
-  },
-  cardLink: {
-    color: '#0ea5e9',
-    fontWeight: '700',
-    marginTop: 4,
-  },
-});
+})
