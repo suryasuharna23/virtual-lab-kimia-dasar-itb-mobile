@@ -25,7 +25,7 @@ import type { Module, Group } from '@/types'
 import { layout, spacing, borderRadius, colors, shadows } from '@/constants/theme'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 
-const OFFLINE_FILES_KEY = 'offline_files'
+const OFFLINE_FILES_KEY = '@offline_files'
 
 interface OfflineFile {
   id: string
@@ -127,8 +127,7 @@ export default function PraktikumScreen() {
         throw new Error('DOWNLOAD_FAILED')
       }
       
-      const blob = await fetchResponse.blob()
-      const arrayBuffer = await blob.arrayBuffer()
+      const arrayBuffer = await fetchResponse.arrayBuffer()
       const uint8Array = new Uint8Array(arrayBuffer)
       file.write(uint8Array)
 
@@ -208,8 +207,7 @@ export default function PraktikumScreen() {
         throw new Error('DOWNLOAD_FAILED')
       }
       
-      const blob = await fetchResponse.blob()
-      const arrayBuffer = await blob.arrayBuffer()
+      const arrayBuffer = await fetchResponse.arrayBuffer()
       const uint8Array = new Uint8Array(arrayBuffer)
       file.write(uint8Array)
 
@@ -474,37 +472,35 @@ export default function PraktikumScreen() {
                 <Animated.View key={group.id} entering={FadeInDown.delay(500 + (index * 100)).springify()}>
                   <Card style={styles.groupCard}>
                     <View style={styles.groupCardContent}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-                        <View style={{ 
-                            width: 48, 
-                            height: 48, 
-                            borderRadius: borderRadius.xl, 
-                            backgroundColor: colors.info + '15', 
-                            alignItems: 'center', 
-                            justifyContent: 'center' 
-                        }}>
-                            <Ionicons name="people" size={24} color={colors.info} />
-                        </View>
-                        <View style={{ flex: 1 }}>
-                            <Text
-                              variant="bodyLarge"
-                              style={{ color: theme.textPrimary, fontWeight: '700' }}
-                              numberOfLines={1}
-                            >
-                              {group.name}
-                            </Text>
-                            <Text
-                              variant="caption"
-                              style={{ color: theme.textSecondary }}
-                            >
-                              {group.cohort || 'Umum'}
-                            </Text>
-                            {downloaded && (
-                              <Badge variant="success" size="sm" style={{ marginTop: 4, alignSelf: 'flex-start' }}>
-                                Tersimpan
-                              </Badge>
-                            )}
-                        </View>
+                      <View style={{ 
+                          width: 48, 
+                          height: 48, 
+                          borderRadius: borderRadius.xl, 
+                          backgroundColor: colors.info + '15', 
+                          alignItems: 'center', 
+                          justifyContent: 'center' 
+                      }}>
+                          <Ionicons name="people" size={24} color={colors.info} />
+                      </View>
+                      <View style={{ flex: 1, marginHorizontal: spacing.md }}>
+                          <Text
+                            variant="bodyLarge"
+                            style={{ color: theme.textPrimary, fontWeight: '700' }}
+                            numberOfLines={1}
+                          >
+                            {group.name}
+                          </Text>
+                          <Text
+                            variant="caption"
+                            style={{ color: theme.textSecondary }}
+                          >
+                            {group.cohort || 'Umum'}
+                          </Text>
+                          {downloaded && (
+                            <Badge variant="success" size="sm" style={{ marginTop: 4, alignSelf: 'flex-start' }}>
+                              Tersimpan
+                            </Badge>
+                          )}
                       </View>
                       <TouchableOpacity
                         onPress={() => handleDownloadGroup(group)}

@@ -1,8 +1,9 @@
 import React from 'react'
-import { View, ScrollView, StyleSheet } from 'react-native'
+import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Image } from 'expo-image'
 import { Ionicons } from '@expo/vector-icons'
+import { useRouter } from 'expo-router'
 import { useTheme } from '@/contexts/ThemeContext'
 import { Text, Card } from '@/components/ui'
 import { layout, spacing, borderRadius, shadows } from '@/constants/theme'
@@ -11,6 +12,7 @@ import Constants from 'expo-constants'
 
 export default function AboutScreen() {
   const { theme } = useTheme()
+  const router = useRouter()
 
   const contactItems = [
     { icon: 'location-outline' as const, label: 'Alamat', value: 'Gedung Labtek XI, Jl. Ganesha No.10, Bandung 40132' },
@@ -21,11 +23,21 @@ export default function AboutScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={theme.textPrimary} />
+        </TouchableOpacity>
+        <Text variant="h3" weight="bold" style={{ color: theme.textPrimary }}>
+          Tentang Aplikasi
+        </Text>
+        <View style={{ width: 40 }} />
+      </View>
+
       <ScrollView 
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.header}>
+        <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.logoSection}>
             <View style={styles.logoContainer}>
                 <Image
                     source={require('@/assets/images/itb-logo.png')}
@@ -94,11 +106,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: layout.screenPaddingHorizontal,
+    paddingVertical: spacing.sm,
+  },
+  backButton: {
+    padding: spacing.xs,
+  },
   content: {
     padding: layout.screenPaddingHorizontal,
     paddingBottom: spacing['4xl'],
   },
-  header: {
+  logoSection: {
     alignItems: 'center',
     marginBottom: spacing.xl,
     marginTop: spacing.lg,

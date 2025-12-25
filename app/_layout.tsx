@@ -58,13 +58,14 @@ function RootLayoutContent() {
         >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="auth" options={{ headerShown: false }} />
-          <Stack.Screen name="pengumuman/[id]" options={{ title: 'Pengumuman' }} />
-          <Stack.Screen name="profile" options={{ title: 'Edit Profil' }} />
-          <Stack.Screen name="about" options={{ title: 'Tentang' }} />
-          <Stack.Screen name="faq" options={{ title: 'FAQ' }} />
-          <Stack.Screen name="kontak" options={{ title: 'Kontak' }} />
+          <Stack.Screen name="nametag" options={{ headerShown: false }} />
+          <Stack.Screen name="pengumuman/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="profile" options={{ headerShown: false }} />
+          <Stack.Screen name="offline-files" options={{ headerShown: false }} />
+          <Stack.Screen name="about" options={{ headerShown: false }} />
+          <Stack.Screen name="faq" options={{ headerShown: false }} />
+          <Stack.Screen name="kontak" options={{ headerShown: false }} />
           <Stack.Screen name="search" options={{ title: 'Pencarian' }} />
-          <Stack.Screen name="offline-files" options={{ title: 'File Offline' }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
         </Stack>
       </AuthGuard>

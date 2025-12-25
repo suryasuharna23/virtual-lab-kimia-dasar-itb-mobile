@@ -6,9 +6,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  TouchableOpacity,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+import { useRouter } from 'expo-router'
 import { useTheme } from '@/contexts/ThemeContext'
 import { Text, Card, Input, Button } from '@/components/ui'
 import { api } from '@/lib/api'
@@ -25,6 +27,7 @@ interface FormData {
 
 export default function KontakScreen() {
   const { theme } = useTheme()
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -92,6 +95,16 @@ export default function KontakScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={theme.textPrimary} />
+        </TouchableOpacity>
+        <Text variant="h3" weight="bold" style={{ color: theme.textPrimary }}>
+          Hubungi Kami
+        </Text>
+        <View style={{ width: 40 }} />
+      </View>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -101,11 +114,8 @@ export default function KontakScreen() {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
         >
-          <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.header}>
-            <Text variant="h2" weight="bold" style={{ color: theme.textPrimary, textAlign: 'center' }}>
-                Hubungi Kami
-            </Text>
-            <Text variant="body" style={{ color: theme.textSecondary, textAlign: 'center', marginTop: spacing.xs }}>
+          <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.introSection}>
+            <Text variant="body" style={{ color: theme.textSecondary, textAlign: 'center' }}>
                 Kami siap membantu pertanyaan Anda
             </Text>
           </Animated.View>
@@ -205,12 +215,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: layout.screenPaddingHorizontal,
+    paddingVertical: spacing.sm,
+  },
+  backButton: {
+    padding: spacing.xs,
+  },
   content: {
     padding: layout.screenPaddingHorizontal,
     paddingBottom: spacing['4xl'],
-    paddingTop: spacing.lg,
   },
-  header: {
+  introSection: {
     marginBottom: spacing.xl,
   },
   infoSection: {

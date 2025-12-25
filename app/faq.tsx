@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { View, ScrollView, TouchableOpacity, StyleSheet, LayoutAnimation, Platform, UIManager } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+import { useRouter } from 'expo-router'
 import { useTheme } from '@/contexts/ThemeContext'
 import { Text, Card } from '@/components/ui'
 import { layout, spacing, shadows } from '@/constants/theme'
@@ -63,6 +64,7 @@ const faqData: FAQItem[] = [
 
 export default function FAQScreen() {
   const { theme } = useTheme()
+  const router = useRouter()
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null)
 
   const toggleExpand = (index: number) => {
@@ -72,14 +74,21 @@ export default function FAQScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={theme.textPrimary} />
+        </TouchableOpacity>
+        <Text variant="h3" weight="bold" style={{ color: theme.textPrimary }}>
+          Bantuan & FAQ
+        </Text>
+        <View style={{ width: 40 }} />
+      </View>
+
       <ScrollView 
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
         <Animated.View entering={FadeInDown.delay(100).springify()}>
-            <Text variant="h2" weight="bold" style={{ marginBottom: spacing.xs, color: theme.textPrimary }}>
-            FAQ
-            </Text>
             <Text variant="body" style={{ marginBottom: spacing.lg, color: theme.textSecondary }}>
             Pertanyaan yang sering diajukan seputar praktikum
             </Text>
@@ -120,10 +129,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: layout.screenPaddingHorizontal,
+    paddingVertical: spacing.sm,
+  },
+  backButton: {
+    padding: spacing.xs,
+  },
   content: {
     padding: layout.screenPaddingHorizontal,
     paddingBottom: spacing['4xl'],
-    paddingTop: spacing.lg,
   },
   card: {
     marginBottom: spacing.md,

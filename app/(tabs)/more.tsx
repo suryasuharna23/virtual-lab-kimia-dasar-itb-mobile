@@ -90,9 +90,11 @@ export default function MoreScreen() {
           </Text>
         )}
       </View>
-      {rightElement || (
-        <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
-      )}
+      <View style={styles.rightElementContainer}>
+        {rightElement || (
+          <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
+        )}
+      </View>
     </Card>
   )
 
@@ -287,6 +289,10 @@ const styles = StyleSheet.create({
   menuContent: {
     flex: 1,
     marginLeft: spacing.md,
+  },
+  rightElementContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   sectionTitle: {
     marginBottom: spacing.md,
