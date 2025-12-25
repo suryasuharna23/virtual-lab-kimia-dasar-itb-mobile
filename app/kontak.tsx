@@ -7,6 +7,7 @@ import {
   Platform,
   Alert,
   TouchableOpacity,
+  TextInput,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -190,18 +191,18 @@ export default function KontakScreen() {
                     borderColor: errors.message ? colors.error : theme.border 
                   }
                 ]}>
-                  <Input
+                  <TextInput
                     placeholder="Tulis pesan Anda di sini..."
+                    placeholderTextColor={theme.textMuted}
                     value={formData.message}
                     onChangeText={(text) => setFormData({ ...formData, message: text })}
                     multiline
                     numberOfLines={4}
                     style={{ 
                       minHeight: 100, 
-                      textAlignVertical: 'top', 
-                      paddingTop: 0,
-                      borderWidth: 0,
-                      backgroundColor: 'transparent'
+                      textAlignVertical: 'top',
+                      color: theme.textPrimary,
+                      fontSize: 16,
                     }}
                   />
                 </View>
