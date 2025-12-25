@@ -80,13 +80,12 @@ export default function HomeScreen() {
   const getAttendanceLevel = () => {
     const attended = sessions.filter(s => s.attended).length
     const total = sessions.length
-    if (total === 0) return 'Pemula'
+    if (total === 0) return 'Initium'
     const percentage = (attended / total) * 100
-    if (percentage === 100) return 'Master'
-    if (percentage >= 75) return 'Mahir'
-    if (percentage >= 50) return 'Menengah'
-    if (percentage >= 25) return 'Dasar'
-    return 'Pemula'
+    if (percentage >= 75) return 'Excellentia'
+    if (percentage >= 50) return 'Harmonia'
+    if (percentage >= 25) return 'Progressio'
+    return 'Initium'
   }
 
   const getModuleIcon = (index: number): string => {

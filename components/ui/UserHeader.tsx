@@ -1,5 +1,5 @@
 import React from 'react'
-import { View, Image, TouchableOpacity } from 'react-native'
+import { View, Image, TouchableOpacity, Alert } from 'react-native'
 import { Text } from './Text'
 import { Badge } from './Badge'
 import { useTheme } from '@/contexts/ThemeContext'
@@ -46,20 +46,26 @@ export function UserHeader({
           )}
         </View>
 
-        <View>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text variant="h4" weight="bold" style={{ marginRight: spacing.sm }}>
-              {name}
-            </Text>
-            <View style={{ 
-              width: 4, 
-              height: 4, 
-              borderRadius: 2, 
-              backgroundColor: theme.textMuted, 
-              marginRight: spacing.sm 
-            }} />
-            <Badge variant="primary" size="sm">{level}</Badge>
-          </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+          <Text variant="h4" weight="bold">
+            {name}
+          </Text>
+          <View style={{ 
+            width: 4, 
+            height: 4, 
+            borderRadius: 2, 
+            backgroundColor: theme.textMuted
+          }} />
+          <Badge variant="primary" size="sm" style={{ alignSelf: 'center' }}>{level}</Badge>
+          <TouchableOpacity 
+            onPress={() => Alert.alert(
+              'Level Kehadiran',
+              "Level ini menunjukkan progress kehadiran praktikum kamu.\n\nBerdasarkan motto ITB 'In Harmonia Progressio':\n\n• Initium (0-24%) - Baru memulai\n• Progressio (25-49%) - Dalam perkembangan\n• Harmonia (50-74%) - Selaras dan konsisten\n• Excellentia (75-100%) - Keunggulan tertinggi"
+            )}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="information-circle-outline" size={16} color={theme.textMuted} />
+          </TouchableOpacity>
         </View>
       </View>
 
