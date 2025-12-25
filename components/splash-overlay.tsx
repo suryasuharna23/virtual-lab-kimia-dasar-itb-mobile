@@ -169,39 +169,6 @@ const Bubble = ({ id, size, color, x, y, delay, onPop }: BubbleProps) => {
   );
 };
 
-const LoadingDot = ({ index, color }: { index: number; color: string }) => {
-  const opacity = useSharedValue(0.3);
-
-  useEffect(() => {
-    opacity.value = withDelay(
-      index * 150,
-      withRepeat(
-        withSequence(
-          withTiming(1, { duration: 500 }),
-          withTiming(0.3, { duration: 500 })
-        ),
-        -1,
-        true
-      )
-    );
-  }, []);
-
-  const style = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ scale: opacity.value }],
-  }));
-
-  return (
-    <Animated.View
-      style={[
-        styles.dot,
-        { backgroundColor: color },
-        style
-      ]}
-    />
-  );
-};
-
 // Sound utility
 const playPopSound = async (soundRef: React.MutableRefObject<Audio.Sound | null>) => {
   try {
@@ -356,19 +323,7 @@ export function SplashOverlay({ onFinish }: Props) {
             </Text>
           </Animated.View>
 
-          <Animated.View 
-            entering={FadeInDown.delay(600).duration(800)}
-            style={styles.loadingContainer}
-          >
-            <View style={styles.dotsContainer}>
-              {[0, 1, 2].map((i) => (
-                <LoadingDot key={i} index={i} color={currentTheme.dots} />
-              ))}
-            </View>
-            <Text style={[styles.tapHint, { color: currentTheme.subtitle }]}>
-              Tap the bubbles! 🫧
-            </Text>
-          </Animated.View>
+
         </View>
       </LinearGradient>
     </View>
@@ -411,23 +366,5 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
   },
-  loadingContainer: {
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  dotsContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  tapHint: {
-    marginTop: 16,
-    fontSize: 14,
-    fontWeight: '500',
-    opacity: 0.7,
-  },
+
 });
