@@ -21,7 +21,7 @@ import { layout, spacing, colors } from '@/constants/theme'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { api } from '@/lib/api'
 import { endpoints } from '@/constants/api'
-import { Module } from '@/types'
+import { Module, Student } from '@/types'
 
 export default function HomeScreen() {
   const { theme } = useTheme()
@@ -31,6 +31,8 @@ export default function HomeScreen() {
   const [modules, setModules] = useState<Module[]>([])
   const [streak, setStreak] = useState(0)
   const [completedDays, setCompletedDays] = useState([false, false, false, false, false, false, false])
+
+  const student = user as Student | null
 
   const fetchModules = useCallback(async () => {
     try {
@@ -58,8 +60,8 @@ export default function HomeScreen() {
   }, [fetchData])
 
   const getUserDisplayName = () => {
-    if (!user) return 'Mahasiswa'
-    return user.full_name?.split(' ')[0] || 'Mahasiswa'
+    if (!student) return 'Mahasiswa'
+    return student.full_name?.split(' ')[0] || 'Mahasiswa'
   }
 
   const getModuleIcon = (index: number): string => {
@@ -92,7 +94,8 @@ export default function HomeScreen() {
           
           <UserHeader 
             name={getUserDisplayName()} 
-            level="Beginner" 
+            level="Beginner"
+            avatarUrl={student?.avatar_url}
             onNotificationPress={() => Alert.alert('Notifikasi', 'Tidak ada notifikasi baru')}
             onGiftPress={() => Alert.alert('Hadiah', 'Kumpulkan streak untuk hadiah!')}
           />
