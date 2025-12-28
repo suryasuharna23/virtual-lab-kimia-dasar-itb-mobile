@@ -11,7 +11,7 @@ import { ThemeProvider, AuthProvider, AppProvider, useTheme } from '@/contexts'
 import { useAuth } from '@/contexts/AuthContext'
 
 export const unstable_settings = {
-  initialRouteName: '(tabs)',
+  initialRouteName: 'auth-selection',
 }
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -23,10 +23,12 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     if (isLoading) return
 
     const inAuthGroup = (segments[0] as string) === 'auth'
+    const inAuthSelection = (segments[0] as string) === 'auth-selection'
+    const inAdmin = (segments[0] as string) === 'admin'
 
-    if (!isAuthenticated && !inAuthGroup) {
-      router.replace('/auth/login' as any)
-    } else if (isAuthenticated && inAuthGroup) {
+    if (!isAuthenticated && !inAuthGroup && !inAuthSelection && !inAdmin) {
+      router.replace('/auth-selection' as any)
+    } else if (isAuthenticated && (inAuthGroup || inAuthSelection || inAdmin)) {
       router.replace('/(tabs)' as any)
     }
   }, [isAuthenticated, isLoading, segments])
