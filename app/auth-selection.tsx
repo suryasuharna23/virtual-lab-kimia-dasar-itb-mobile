@@ -45,10 +45,10 @@ export default function AuthSelectionScreen() {
             <Ionicons name="chevron-forward" size={22} color={theme.textSecondary} />
           </TouchableOpacity>
           <View style={styles.divider} />
-          <TouchableOpacity
-            style={[styles.option, { backgroundColor: '#FEF3C7' }]}
-            activeOpacity={0.85}
-            onPress={() => router.replace('/admin/login')}
+            <TouchableOpacity
+              style={[styles.option, { backgroundColor: '#FEF3C7' }]}
+              activeOpacity={0.85}
+              onPress={() => router.push('/admin' as any)}
           >
             <View style={[styles.iconBadge, { backgroundColor: '#FEF3C7' }]}> 
               <Ionicons name="shield-checkmark" size={28} color={'#F59E0B'} />
