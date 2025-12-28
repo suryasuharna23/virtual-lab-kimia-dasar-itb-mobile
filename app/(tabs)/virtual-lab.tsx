@@ -1,121 +1,91 @@
-import React, { useEffect } from 'react'
-import { StyleSheet, View, Alert } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
-import { Text, Button, Badge } from '@/components/ui'
-import { useTheme } from '@/contexts/ThemeContext'
-import { spacing, layout } from '@/constants/theme'
-import Animated, { 
-    useSharedValue, 
-    useAnimatedStyle, 
-    withRepeat, 
-    withTiming, 
-    Easing,
-    FadeInDown
-} from 'react-native-reanimated'
 
-export default function VirtualLabScreen() {
-  const { theme } = useTheme()
-  const rotation = useSharedValue(0)
-  const float = useSharedValue(0)
+import React, { useState } from 'react';
+import { View, ScrollView, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTheme } from '@/contexts/ThemeContext';
+import { spacing, shadows, borderRadius, layout } from '@/constants/theme';
+import VirtualLabSimulasi from '../virtual-lab-simulasi';
+import { virtualLabPractices, virtualLabTools } from '@/constants/virtualLab';
+import { Button, Text, Card } from '@/components/ui';
+import { Ionicons } from '@expo/vector-icons';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
-  useEffect(() => {
-    rotation.value = withRepeat(
-        withTiming(10, { duration: 2000, easing: Easing.inOut(Easing.ease) }), 
-        -1, 
-        true
-    )
-    
-    float.value = withRepeat(
-        withTiming(10, { duration: 1500, easing: Easing.inOut(Easing.quad) }),
-        -1,
-        true
-    )
-  }, [])
+export default function VirtualLabTab() {
+  const { theme } = useTheme();
+  const [selectedPracticeId, setSelectedPracticeId] = useState<string | null>(null);
 
-  const animatedIconStyle = useAnimatedStyle(() => ({
-      transform: [{ translateY: float.value }]
-  }))
+  if (selectedPracticeId) {
+    const practice = virtualLabPractices.find(p => p.id === selectedPracticeId);
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
+        <View style={{ flex: 1 }}>
+          <VirtualLabSimulasi practice={practice} onBack={() => setSelectedPracticeId(null)} />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
+  // List Praktikum (styled like Praktikum)
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={styles.content}>
-        <Animated.View style={[styles.iconContainer, animatedIconStyle]}>
-            <View style={[styles.iconCircle, { backgroundColor: theme.primarySoft }]}>
-                <Ionicons name="flask" size={80} color={theme.primary} />
-            </View>
-            <View style={[styles.bubble, { top: 0, right: 10, backgroundColor: theme.accent }]} />
-            <View style={[styles.bubble, { top: 20, left: 0, backgroundColor: theme.accent, width: 12, height: 12 }]} />
-        </Animated.View>
-
-        <Animated.View entering={FadeInDown.delay(300).springify()} style={{ alignItems: 'center' }}>
-            <Badge variant="warning" size="md" style={{ marginBottom: spacing.md }}>
-                COMING SOON
-            </Badge>
-            
-            <Text variant="h1" style={{ textAlign: 'center', marginBottom: spacing.sm, fontWeight: '800', color: theme.textPrimary }}>
-                Lab Virtual
-            </Text>
-            
-            <Text variant="bodyLarge" style={{ textAlign: 'center', color: theme.textSecondary, marginBottom: spacing.xl, maxWidth: '80%' }}>
-                Kami sedang meracik bahan kimia digital untuk pengalaman praktikum yang aman dan seru! 🧪✨
-            </Text>
-        </Animated.View>
-
-        <Animated.View entering={FadeInDown.delay(500).springify()} style={{ width: '100%', maxWidth: 300 }}>
-            <Button 
-                variant="primary" 
-                size="lg" 
-                fullWidth
-                onPress={() => Alert.alert("Notifikasi Diaktifkan", "Kami akan memberi tahu Anda saat Lab Virtual siap!")}
-                leftIcon={<Ionicons name="notifications-outline" size={20} color="#fff" />}
-            >
-                Beri Tahu Saya
-            </Button>
-            
-            <Button 
-                variant="ghost" 
-                size="md" 
-                fullWidth 
-                style={{ marginTop: spacing.md }}
-                onPress={() => Alert.alert("Info", "Fitur ini akan mencakup simulasi titrasi, pencampuran larutan, dan reaksi kimia dasar.")}
-            >
-                Pelajari Lebih Lanjut
-            </Button>
-        </Animated.View>
-      </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <Text variant="h2" style={{ color: theme.textPrimary, fontWeight: '800' }}>
+            Lab Virtual
+          </Text>
+          <Text variant="body" style={{ color: theme.textSecondary }}>
+            Pilih praktikum yang ingin disimulasikan:
+          </Text>
+        </View>
+        <View style={styles.section}>
+          {virtualLabPractices.map((item, index) => {
+            let iconName = 'flask';
+            const firstStepWithTool = item.steps.find(s => s.tools && s.tools.length > 0);
+            if (firstStepWithTool && firstStepWithTool.tools.length > 0) {
+              const toolKey = firstStepWithTool.tools[0] as keyof typeof virtualLabTools;
+              iconName = virtualLabTools[toolKey]?.icon || 'flask';
+            }
+            return (
+              <Animated.View key={item.id} entering={FadeInDown.delay(200 + (index * 100)).springify()}>
+                <Card
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginBottom: spacing.md,
+                    backgroundColor: theme.surface,
+                    borderRadius: borderRadius.lg,
+                    padding: spacing.lg,
+                    ...shadows.sm,
+                  }}
+                  onPress={() => setSelectedPracticeId(item.id)}
+                >
+                  <View style={{ width: 48, height: 48, borderRadius: borderRadius.lg, backgroundColor: theme.surfacePurple, alignItems: 'center', justifyContent: 'center', marginRight: spacing.md, borderWidth: 1, borderColor: theme.primary }}>
+                    <Ionicons name={iconName as any} size={28} color={theme.primary} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text variant="bodyLarge" style={{ color: theme.textPrimary, fontWeight: 'bold' }}>{item.name}</Text>
+                    <Text variant="caption" style={{ color: theme.textSecondary }}>{item.description}</Text>
+                  </View>
+                </Card>
+              </Animated.View>
+            );
+          })}
+        </View>
+        <View style={{ height: 100 }} />
+      </ScrollView>
     </SafeAreaView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+  scrollContent: {
     padding: layout.screenPaddingHorizontal,
+    paddingTop: layout.screenPaddingTop,
   },
-  iconContainer: {
-    position: 'relative',
-    marginBottom: spacing.xl,
+  header: {
+    marginBottom: layout.sectionGap,
   },
-  iconCircle: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 4,
-    borderColor: 'rgba(0,0,0,0.05)',
+  section: {
+    marginBottom: layout.sectionGap,
   },
-  bubble: {
-    position: 'absolute',
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    opacity: 0.8,
-  }
-})
+});

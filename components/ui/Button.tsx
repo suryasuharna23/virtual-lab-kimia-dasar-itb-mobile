@@ -66,6 +66,27 @@ export function Button({
       }
     }
 
+    const isDark = (theme.background || '').toLowerCase() === '#0f0e1a';
+
+    // For dark mode, always use #1E1B4B for text/icon
+    if (isDark) {
+      return {
+        bg: (() => {
+          switch (variant) {
+            case 'primary': return theme.primary;
+            case 'secondary': return theme.primarySoft;
+            case 'accent': return theme.accent;
+            case 'success': return colors.success;
+            case 'danger': return colors.error;
+            case 'ghost': return 'transparent';
+            default: return theme.primary;
+          }
+        })(),
+        text: '#1E1B4B',
+      }
+    }
+
+    // Light mode: default logic
     switch (variant) {
       case 'primary':
         return {
@@ -104,9 +125,6 @@ export function Button({
         }
     }
   }
-
-  const colorScheme = getColors()
-
   // Styles based on size
   const getDimensions = () => {
     switch (size) {
@@ -135,6 +153,7 @@ export function Button({
   }
 
   const dims = getDimensions()
+  const colorScheme = getColors();
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
