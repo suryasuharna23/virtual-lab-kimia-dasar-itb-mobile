@@ -1,63 +1,391 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { 
+  View, 
+  StyleSheet, 
+  Modal, 
+  TextInput, 
+  Alert, 
+  Switch, 
+  FlatList, 
+  RefreshControl,
+  KeyboardAvoidingView,
+  Platform,
+  Dimensions,
+  TouchableOpacity
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
-import { Text, Card, Button } from '@/components/ui';
+import { Text, Card, Button, LoadingSpinner, Badge } from '@/components/ui';
+import { api } from '@/lib/api';
+import { endpoints } from '@/constants/api';
+import type { Announcement } from '@/types';
+
+// Helper sederhana untuk format tanggal (Opsional, sesuaikan dengan library date Anda seperti dayjs/date-fns)
+const formatDate = (dateString?: string) => {
+  if (!dateString) return 'Baru saja';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute:'2-digit' });
+};
 
 export default function AdminAnnouncementScreen() {
   const { theme } = useTheme();
-  const cardStyle = (overrides: Partial<any> = {}) => ({
-    ...styles.announcementCard,
-    backgroundColor: theme.surface,
-    borderColor: theme.border,
-    ...overrides,
-  });
+
+  // State
+  const [modalVisible, setModalVisible] = useState(false);
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [isImportant, setIsImportant] = useState(false);
+  
+  // Loading states
+  const [submitting, setSubmitting] = useState(false);
+  const [loadingList, setLoadingList] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Data
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+
+  // --- API HANDLERS ---
+
+  const fetchAnnouncements = useCallback(async () => {
+    try {
+      const response = await api.getWithQuery<Announcement[]>(endpoints.announcements.list, { page: 1, limit: 20 });
+      if (response.success) {
+        setAnnouncements(response.data);
+      }
+    } catch (e) {
+      console.error("Fetch error", e);
+    } finally {
+      setLoadingList(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAnnouncements();
+  }, [fetchAnnouncements]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchAnnouncements();
+  };
+
+  const handleSubmit = async () => {
+    if (!title.trim() || !content.trim()) {
+      Alert.alert('Form Belum Lengkap', 'Mohon isi judul dan konten pengumuman.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      // Kirim hanya field yang diperlukan
+      const payload: any = {
+        title,
+        content,
+        is_important: isImportant,
+        // attachments: [], // Hapus/comment jika tidak ada lampiran
+      };
+
+      const response = await api.post<Announcement>(endpoints.announcements.list, payload);
+      console.log('POST response:', response);
+      if (response.success) {
+        setModalVisible(false);
+        resetForm();
+        fetchAnnouncements();
+        Alert.alert('Berhasil', 'Pengumuman telah dipublikasikan.');
+      } else {
+        Alert.alert('Gagal', response.message || 'Gagal membuat pengumuman.');
+      }
+    } catch (e) {
+      console.log('API error:', e);
+      Alert.alert('Error', 'Terjadi kesalahan koneksi.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const resetForm = () => {
+    setTitle('');
+    setContent('');
+    setIsImportant(false);
+  };
+
+  // --- RENDERERS ---
+
+  const renderHeader = () => (
+    <View style={styles.headerContainer}>
+      <View>
+        <Text variant="h2" style={{ color: theme.textPrimary, fontWeight: '800' }}>
+          Pengumuman
+        </Text>
+        <Text style={{ color: theme.textSecondary, marginTop: 4 }}>
+          Kelola informasi untuk praktikan
+        </Text>
+      </View>
+      <Button
+        size="sm"
+        variant="primary"
+        leftIcon={<Ionicons name="add" size={18} color={theme.textOnPrimary} />}
+        onPress={() => setModalVisible(true)}
+        style={{ borderRadius: 20, paddingHorizontal: 16 }}
+      >
+        Baru
+      </Button>
+    </View>
+  );
+
+  const renderItem = ({ item }: { item: Announcement }) => (
+    <Card style={StyleSheet.flatten([styles.card, { backgroundColor: theme.surface, borderColor: theme.border }])}>
+      {/* Header Card: Badge & Date */}
+      <View style={styles.cardHeader}>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {item.is_important && (
+            <Badge variant="warning" size="sm">PENTING</Badge>
+          )}
+          {/* Asumsi ada field created_at, jika tidak ada hapus bagian ini */}
+          <Text variant="caption" style={{ color: theme.textMuted }}>
+             {/* {formatDate(item.created_at)} */} 
+             Hari ini
+          </Text>
+        </View>
+        
+        {/* Tombol Opsi (Optional) */}
+        <TouchableOpacity hitSlop={10}>
+          <Ionicons name="ellipsis-horizontal" size={20} color={theme.textMuted} />
+        </TouchableOpacity>
+      </View>
+
+      {/* Content */}
+      <Text style={[styles.cardTitle, { color: theme.textPrimary }]}>{item.title}</Text>
+      <Text 
+        style={[styles.cardContent, { color: theme.textSecondary }]} 
+        numberOfLines={3}
+      >
+        {item.content.replace(/<[^>]+>/g, '')}
+      </Text>
+
+      {/* Footer: Attachments */}
+      {item.attachments && item.attachments.length > 0 && (
+        <View style={[styles.cardFooter, { backgroundColor: theme.background }]}>
+          <Ionicons name="document-text-outline" size={16} color={theme.primary} />
+          <Text variant="caption" style={{ color: theme.primary, fontWeight: '600', marginLeft: 6 }}>
+            {item.attachments.length} Lampiran tersedia
+          </Text>
+        </View>
+      )}
+    </Card>
+  );
+
+  const renderEmpty = () => (
+    <View style={styles.emptyContainer}>
+      <View style={[styles.iconCircle, { backgroundColor: theme.border }]}>
+        <Ionicons name="megaphone-outline" size={40} color={theme.textMuted} />
+      </View>
+      <Text variant="h4" style={{ color: theme.textPrimary, marginTop: 16 }}>Belum ada pengumuman</Text>
+      <Text style={{ color: theme.textSecondary, textAlign: 'center', marginTop: 8, maxWidth: '80%' }}>
+        Tap tombol "Baru" di atas untuk membuat pengumuman pertama Anda.
+      </Text>
+    </View>
+  );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
-      <View style={styles.container}>
-        <Text variant="h2" style={{ color: theme.primary, fontWeight: '900', marginBottom: 18, textAlign: 'center', letterSpacing: 0.5 }}>
-          Pengumuman Praktikum
-        </Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }} edges={['top']}>
+      
+      {/* Main List */}
+      <FlatList
+        data={announcements}
+        keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
+        renderItem={renderItem}
+        contentContainerStyle={styles.listContent}
+        ListHeaderComponent={renderHeader}
+        ListEmptyComponent={!loadingList ? renderEmpty : null}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.primary]} />
+        }
+        ListFooterComponent={
+          loadingList && !refreshing ? (
+            <View style={{ padding: 20 }}>
+              <LoadingSpinner size="lg" color={theme.primary} />
+            </View>
+          ) : <View style={{ height: 20 }} />
+        }
+      />
 
-        <Button variant="primary" leftIcon={<Ionicons name="add" size={20} color={theme.textOnPrimary} />} style={{ marginBottom: 16 }}>
-          Buat Pengumuman
-        </Button>
+      {/* Modal Create */}
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
+          <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
+            <View style={styles.modalHeader}>
+              <Text variant="h3" style={{ color: theme.textPrimary }}>Buat Pengumuman</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Ionicons name="close-circle" size={28} color={theme.textMuted} />
+              </TouchableOpacity>
+            </View>
 
-        <Card style={cardStyle()}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Ionicons name="alert" size={20} color={'#E53935'} style={{ marginRight: 8 }} />
-            <Text style={{ color: '#E53935', fontWeight: '700', fontSize: 13 }}>Penting</Text>
+            <View style={styles.formGroup}>
+              <Text style={{color: theme.textSecondary, marginBottom: 6, fontSize: 12, fontWeight: '600'}}>JUDUL</Text>
+              <TextInput
+                placeholder="Contoh: Perubahan Jadwal Praktikum"
+                placeholderTextColor={theme.textMuted}
+                value={title}
+                onChangeText={setTitle}
+                style={[styles.input, { borderColor: theme.border, color: theme.textPrimary, backgroundColor: theme.background }]}
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={{color: theme.textSecondary, marginBottom: 6, fontSize: 12, fontWeight: '600'}}>ISI PENGUMUMAN</Text>
+              <TextInput
+                placeholder="Tulis informasi detail di sini..."
+                placeholderTextColor={theme.textMuted}
+                value={content}
+                onChangeText={setContent}
+                multiline
+                style={[styles.input, styles.textArea, { borderColor: theme.border, color: theme.textPrimary, backgroundColor: theme.background }]}
+              />
+            </View>
+
+            <View style={[styles.switchContainer, { backgroundColor: theme.background, borderColor: theme.border }]}>
+              <View style={{flex: 1}}>
+                <Text style={{ color: theme.textPrimary, fontWeight: '600' }}>Tandai Penting</Text>
+                <Text variant="caption" style={{ color: theme.textSecondary }}>Akan muncul highlight merah</Text>
+              </View>
+              <Switch 
+                value={isImportant} 
+                onValueChange={setIsImportant} 
+                trackColor={{ false: theme.border, true: theme.primary }}
+              />
+            </View>
+
+            <Button 
+              variant="primary" 
+              size="lg"
+              onPress={handleSubmit} 
+              loading={submitting}
+              style={{ marginTop: 8 }}
+            >
+              Kirim Pengumuman
+            </Button>
           </View>
+        </KeyboardAvoidingView>
+      </Modal>
 
-          <Text style={{ color: theme.textPrimary, fontWeight: '700', fontSize: 16, marginTop: 8 }}>Jadwal Praktikum Minggu Ini</Text>
-          <Text style={{ color: theme.textSecondary, marginTop: 4 }}>Praktikum dimulai pukul 08.00 di Lab Kimia Dasar. Harap hadir tepat waktu.</Text>
-
-          <View style={styles.actionRow}>
-            <TouchableOpacity style={{ marginRight: 18 }} accessibilityLabel="Edit"><Ionicons name="create" size={18} color={theme.primary} /></TouchableOpacity>
-            <TouchableOpacity accessibilityLabel="Delete"><Ionicons name="trash" size={18} color={'#E53935'} /></TouchableOpacity>
-          </View>
-        </Card>
-      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 24, // DESIGN_SYSTEM: xl (24)
+  listContent: {
+    padding: 20,
+    paddingBottom: 40,
   },
-  announcementCard: {
-    marginTop: 18,
-    padding: 18, // DESIGN_SYSTEM: lg (16) / custom 18
-    borderRadius: 16,
-    elevation: 2,
-    borderWidth: 1,
-  },
-  actionRow: {
+  headerContainer: {
     flexDirection: 'row',
-    marginTop: 14,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+    marginTop: 8,
+  },
+  card: {
+    padding: 0, // Reset default padding Card component jika ada
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 16,
+    overflow: 'hidden',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    marginBottom: 8,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
+  cardContent: {
+    fontSize: 14,
+    lineHeight: 20,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    paddingHorizontal: 16,
+  },
+  // Empty State Styles
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 60,
+  },
+  iconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    opacity: 0.5,
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+    elevation: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  formGroup: {
+    marginBottom: 16,
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+  },
+  textArea: {
+    minHeight: 120,
+    textAlignVertical: 'top',
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 24,
   },
 });
