@@ -36,7 +36,8 @@ export default function AdminAnnouncementScreen() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isImportant, setIsImportant] = useState(false);
-  
+  const [editAnnouncement, setEditAnnouncement] = useState<Announcement | null>(null)
+
   // Loading states
   const [submitting, setSubmitting] = useState(false);
   const [loadingList, setLoadingList] = useState(true);
@@ -103,6 +104,64 @@ export default function AdminAnnouncementScreen() {
     }
   };
 
+  const handleEdit = (item: Announcement) => {
+    setEditAnnouncement(item)
+    setTitle(item.title)
+    setContent(item.content)
+    setIsImportant(!!item.is_important)
+    setModalVisible(true)
+  }
+
+  const handleDelete = async (id: string | number) => {
+    Alert.alert('Hapus Pengumuman', 'Yakin ingin menghapus pengumuman ini?', [
+      { text: 'Batal', style: 'cancel' },
+      {
+        text: 'Hapus', style: 'destructive', onPress: async () => {
+          try {
+            const response = await api.delete(`${endpoints.announcements.list}/${id}`)
+            if (response.success) {
+              fetchAnnouncements()
+              Alert.alert('Berhasil', 'Pengumuman dihapus.')
+            } else {
+              Alert.alert('Gagal', response.message || 'Gagal menghapus pengumuman.')
+            }
+          } catch (e) {
+            Alert.alert('Error', 'Terjadi kesalahan koneksi.')
+          }
+        }
+      }
+    ])
+  }
+
+  const handleUpdate = async () => {
+    if (!title.trim() || !content.trim()) {
+      Alert.alert('Form Belum Lengkap', 'Mohon isi judul dan konten pengumuman.')
+      return
+    }
+    setSubmitting(true)
+    try {
+      const payload: any = {
+        title,
+        content,
+        is_important: isImportant,
+      }
+      const response = await api.put(`${endpoints.announcements.list}/${editAnnouncement?.id}`, payload)
+      if (response.success) {
+        setModalVisible(false)
+        resetForm()
+        setEditAnnouncement(null)
+        fetchAnnouncements()
+        Alert.alert('Berhasil', 'Pengumuman berhasil diupdate.')
+      } else {
+        Alert.alert('Gagal', response.message || 'Gagal update pengumuman.')
+      }
+    } catch (e) {
+      Alert.alert('Error', 'Terjadi kesalahan koneksi.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   const resetForm = () => {
     setTitle('');
     setContent('');
@@ -135,35 +194,28 @@ export default function AdminAnnouncementScreen() {
 
   const renderItem = ({ item }: { item: Announcement }) => (
     <Card style={StyleSheet.flatten([styles.card, { backgroundColor: theme.surface, borderColor: theme.border }])}>
-      {/* Header Card: Badge & Date */}
       <View style={styles.cardHeader}>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {item.is_important && (
             <Badge variant="warning" size="sm">PENTING</Badge>
           )}
-          {/* Asumsi ada field created_at, jika tidak ada hapus bagian ini */}
           <Text variant="caption" style={{ color: theme.textMuted }}>
-             {/* {formatDate(item.created_at)} */} 
-             Hari ini
+            Hari ini
           </Text>
         </View>
-        
-        {/* Tombol Opsi (Optional) */}
-        <TouchableOpacity hitSlop={10}>
-          <Ionicons name="ellipsis-horizontal" size={20} color={theme.textMuted} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <TouchableOpacity onPress={() => handleEdit(item)} hitSlop={10}>
+            <Ionicons name="create-outline" size={20} color={theme.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleDelete(item.id)} hitSlop={10}>
+            <Ionicons name="trash-outline" size={20} color={'#EF4444'} />
+          </TouchableOpacity>
+        </View>
       </View>
-
-      {/* Content */}
       <Text style={[styles.cardTitle, { color: theme.textPrimary }]}>{item.title}</Text>
-      <Text 
-        style={[styles.cardContent, { color: theme.textSecondary }]} 
-        numberOfLines={3}
-      >
+      <Text style={[styles.cardContent, { color: theme.textSecondary }]} numberOfLines={3}>
         {item.content.replace(/<[^>]+>/g, '')}
       </Text>
-
-      {/* Footer: Attachments */}
       {item.attachments && item.attachments.length > 0 && (
         <View style={[styles.cardFooter, { backgroundColor: theme.background }]}>
           <Ionicons name="document-text-outline" size={16} color={theme.primary} />
@@ -215,20 +267,27 @@ export default function AdminAnnouncementScreen() {
         visible={modalVisible}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setModalVisible(false)}
+        onRequestClose={() => {
+          setModalVisible(false)
+          setEditAnnouncement(null)
+          resetForm()
+        }}
       >
         <KeyboardAvoidingView 
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.modalOverlay}
         >
-          <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
+          <View style={[styles.modalContent, { backgroundColor: theme.surface }]}> 
             <View style={styles.modalHeader}>
-              <Text variant="h3" style={{ color: theme.textPrimary }}>Buat Pengumuman</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
+              <Text variant="h3" style={{ color: theme.textPrimary }}>{editAnnouncement ? 'Edit Pengumuman' : 'Buat Pengumuman'}</Text>
+              <TouchableOpacity onPress={() => {
+                setModalVisible(false)
+                setEditAnnouncement(null)
+                resetForm()
+              }}>
                 <Ionicons name="close-circle" size={28} color={theme.textMuted} />
               </TouchableOpacity>
             </View>
-
             <View style={styles.formGroup}>
               <Text style={{color: theme.textSecondary, marginBottom: 6, fontSize: 12, fontWeight: '600'}}>JUDUL</Text>
               <TextInput
@@ -239,7 +298,6 @@ export default function AdminAnnouncementScreen() {
                 style={[styles.input, { borderColor: theme.border, color: theme.textPrimary, backgroundColor: theme.background }]}
               />
             </View>
-
             <View style={styles.formGroup}>
               <Text style={{color: theme.textSecondary, marginBottom: 6, fontSize: 12, fontWeight: '600'}}>ISI PENGUMUMAN</Text>
               <TextInput
@@ -251,8 +309,7 @@ export default function AdminAnnouncementScreen() {
                 style={[styles.input, styles.textArea, { borderColor: theme.border, color: theme.textPrimary, backgroundColor: theme.background }]}
               />
             </View>
-
-            <View style={[styles.switchContainer, { backgroundColor: theme.background, borderColor: theme.border }]}>
+            <View style={[styles.switchContainer, { backgroundColor: theme.background, borderColor: theme.border }]}> 
               <View style={{flex: 1}}>
                 <Text style={{ color: theme.textPrimary, fontWeight: '600' }}>Tandai Penting</Text>
                 <Text variant="caption" style={{ color: theme.textSecondary }}>Akan muncul highlight merah</Text>
@@ -263,15 +320,14 @@ export default function AdminAnnouncementScreen() {
                 trackColor={{ false: theme.border, true: theme.primary }}
               />
             </View>
-
             <Button 
               variant="primary" 
               size="lg"
-              onPress={handleSubmit} 
+              onPress={editAnnouncement ? handleUpdate : handleSubmit} 
               loading={submitting}
               style={{ marginTop: 8 }}
             >
-              Kirim Pengumuman
+              {editAnnouncement ? 'Update Pengumuman' : 'Kirim Pengumuman'}
             </Button>
           </View>
         </KeyboardAvoidingView>
