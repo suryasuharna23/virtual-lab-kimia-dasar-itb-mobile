@@ -5,6 +5,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Text, Card, Button } from '@/components/ui';
+import { useAuth } from '@/contexts/AuthContext';
+import * as SecureStore from 'expo-secure-store';
 
 const API_URL = 'http://192.168.1.5:5001/api/modules'; // IP backend di jaringan lokal
 
@@ -18,6 +20,7 @@ type Module = {
 
 export default function AdminModuleScreen() {
   const { theme } = useTheme();
+  const auth = useAuth();
   const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -28,9 +31,6 @@ export default function AdminModuleScreen() {
   const [file, setFile] = useState<DocumentPicker.DocumentPickerResult | null>(null);
   const [editId, setEditId] = useState(null);
   const [visibility, setVisibility] = useState('public');
-
-  // TODO: Ganti dengan token dari context/auth
-  const token = '';
 
   const cardStyle = (overrides: Partial<any> = {}) => ({
     ...styles.moduleCard,
@@ -44,7 +44,18 @@ export default function AdminModuleScreen() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${API_URL}?page=1&limit=20`);
+      const token = await SecureStore.getItemAsync('auth_token');
+      console.log('TOKEN:', token); // Tambahkan log ini
+      if (!token) {
+        setError('Token tidak ditemukan. Silakan login ulang.');
+        setLoading(false);
+        return;
+      }
+      const res = await fetch(`${API_URL}?page=1&limit=20`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       const text = await res.text();
       console.log('API response:', text);
       let json;
@@ -78,6 +89,7 @@ export default function AdminModuleScreen() {
     }
     setUploading(true);
     try {
+      const token = await SecureStore.getItemAsync('auth_token');
       const formData = new FormData();
       formData.append('title', title);
       formData.append('description', description);
@@ -123,6 +135,7 @@ export default function AdminModuleScreen() {
     }
     setUploading(true);
     try {
+      const token = await SecureStore.getItemAsync('auth_token');
       const res = await fetch(`${API_URL}/${editId}`, {
         method: 'PUT',
         headers: {
@@ -155,6 +168,7 @@ export default function AdminModuleScreen() {
       {
         text: 'Hapus', style: 'destructive', onPress: async () => {
           try {
+            const token = await SecureStore.getItemAsync('auth_token');
             const res = await fetch(`${API_URL}/${id}`, {
               method: 'DELETE',
               headers: { 'Authorization': `Bearer ${token}` },
@@ -178,7 +192,15 @@ export default function AdminModuleScreen() {
   const handleDownload = async (id: string) => {
     try {
       const res = await fetch(`${API_URL}/${id}/download`);
-      const json = await res.json();
+      const text = await res.text();
+      console.log('[DOWNLOAD] Response:', text);
+      let json;
+      try {
+        json = JSON.parse(text);
+      } catch (e) {
+        Alert.alert('Error', 'Response bukan JSON: ' + text);
+        return;
+      }
       if (json.success && json.data.download_url) {
         // Open download URL (expo-linking or WebBrowser)
         Alert.alert('Download', 'Link download siap dibuka');
@@ -187,6 +209,7 @@ export default function AdminModuleScreen() {
         Alert.alert('Error', json.message || 'Gagal mendapatkan link download');
       }
     } catch (e) {
+      console.log('[DOWNLOAD] Error:', e);
       Alert.alert('Error', 'Gagal download modul');
     }
   };
