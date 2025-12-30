@@ -15,7 +15,7 @@ export const unstable_settings = {
 }
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading, isAdmin, isStudent } = useAuth()
   const segments = useSegments()
   const router = useRouter()
 
@@ -25,13 +25,18 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     const inAuthGroup = (segments[0] as string) === 'auth'
     const inAuthSelection = (segments[0] as string) === 'auth-selection'
     const inAdmin = (segments[0] as string) === 'admin'
+    const inTabs = (segments[0] as string) === '(tabs)'
 
     if (!isAuthenticated && !inAuthGroup && !inAuthSelection && !inAdmin) {
       router.replace('/auth-selection' as any)
-    } else if (isAuthenticated && (inAuthGroup || inAuthSelection || inAdmin)) {
-      router.replace('/(tabs)' as any)
+    } else if (isAuthenticated) {
+      if (isAdmin && !inAdmin) {
+        router.replace('/admin' as any)
+      } else if (isStudent && !inTabs) {
+        router.replace('/(tabs)' as any)
+      }
     }
-  }, [isAuthenticated, isLoading, segments])
+  }, [isAuthenticated, isLoading, isAdmin, isStudent, segments])
 
   if (isLoading) {
     return (

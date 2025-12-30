@@ -28,7 +28,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAdmin = user !== null && 'role' in user && user.role === 'admin'
   const isStudent = user !== null && !('role' in user)
 
-  const refreshUser = useCallback(async () => {
+  // Tambahkan forceAdmin agar bisa paksa refresh sebagai admin
+  const refreshUser = useCallback(async (forceAdmin: boolean = false) => {
     try {
       const token = await SecureStore.getItemAsync('auth_token')
       if (!token) {
@@ -37,7 +38,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
-      // Try student endpoint first (this is a student mobile app)
+      if (forceAdmin) {
+        // Paksa cek endpoint admin saja
+        try {
+          const response = await api.get<User>(endpoints.auth.me)
+          if (response.success && response.data) {
+            setUser(response.data)
+            return
+          }
+        } catch {
+          await api.clearAuthToken()
+          setUser(null)
+        }
+        setIsLoading(false)
+        return
+      }
+
+      // Default: coba student dulu, lalu admin
       try {
         const response = await api.get<Student>(endpoints.auth.studentMe)
         if (response.success && response.data) {
@@ -48,7 +65,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Not student, try admin
       }
 
-      // Try admin endpoint
       try {
         const response = await api.get<User>(endpoints.auth.me)
         if (response.success && response.data) {
@@ -56,7 +72,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return
         }
       } catch {
-        // Token invalid, clear it
         await api.clearAuthToken()
         setUser(null)
       }
@@ -81,7 +96,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       await api.setAuthToken(response.data.token)
-      setUser(response.data.user)
+      // Setelah login admin, set user langsung dari respons
+      if (!isStudentLogin) {
+        setUser(response.data.user)
+      } else {
+        setUser(response.data.user)
+      }
     },
     []
   )
