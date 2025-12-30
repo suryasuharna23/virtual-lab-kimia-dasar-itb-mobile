@@ -8,14 +8,13 @@ import { Text, Card, Button } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import * as SecureStore from 'expo-secure-store';
 
-const API_URL = 'http://192.168.1.5:5001/api/modules'; // IP backend di jaringan lokal
+const API_URL = 'http://192.168.1.5:5001/api/modules';
 
 type Module = {
   id: string;
   title: string;
   description: string;
   visibility: string;
-  // Add other fields if needed
 };
 
 export default function AdminModuleScreen() {
@@ -45,7 +44,7 @@ export default function AdminModuleScreen() {
     setError('');
     try {
       const token = await SecureStore.getItemAsync('auth_token');
-      console.log('TOKEN:', token); // Tambahkan log ini
+      console.log('TOKEN:', token);
       if (!token) {
         setError('Token tidak ditemukan. Silakan login ulang.');
         setLoading(false);
