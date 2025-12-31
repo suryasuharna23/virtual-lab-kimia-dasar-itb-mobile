@@ -34,13 +34,14 @@ export default function AdminTabLayout() {
           paddingVertical: 10,
         },
         tabBarButton: HapticTab,
-        headerShown: false,
+        headerShown: false, // Hide navigation header for all admin pages
         tabBarShowLabel: false,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="grid" size={size} color={color} />
           ),
@@ -49,6 +50,7 @@ export default function AdminTabLayout() {
       <Tabs.Screen
         name="announcement"
         options={{
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="megaphone" size={size} color={color} />
           ),
@@ -57,6 +59,7 @@ export default function AdminTabLayout() {
       <Tabs.Screen
         name="module"
         options={{
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="document" size={size} color={color} />
           ),
@@ -65,8 +68,18 @@ export default function AdminTabLayout() {
       <Tabs.Screen
         name="group"
         options={{
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="people" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="more"
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="ellipsis-horizontal" size={size} color={color} />
           ),
         }}
       />

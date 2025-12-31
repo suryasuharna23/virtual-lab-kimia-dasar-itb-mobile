@@ -1,66 +1,114 @@
 import React, { useRef } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Animated, Image, Dimensions } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Animated,
+  Image,
+  Dimensions,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient'; // Pastikan install ini
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Text } from '@/components/ui';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-// Komponen Kartu Menu dengan Animasi Tekan
-const MenuCard = ({ title, icon, color, library, onPress }: any) => {
-  const scaleValue = useRef(new Animated.Value(1)).current;
+// Helper for shadow style
+const shadow = {
+  shadowColor: '#1E1B4B',
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.10,
+  shadowRadius: 12,
+  elevation: 6,
+};
+
+/* =========================================================
+   MENU CARD
+========================================================= */
+const MenuCard = ({
+  title,
+  subtitle,
+  icon,
+  color,
+  library,
+  onPress,
+}: any) => {
+  const scale = useRef(new Animated.Value(1)).current;
   const { theme } = useTheme();
+  const IconLib =
+    library === 'MaterialCommunityIcons'
+      ? MaterialCommunityIcons
+      : Ionicons;
 
-  const onPressIn = () => {
-    Animated.spring(scaleValue, {
-      toValue: 0.95,
+  const pressIn = () =>
+    Animated.spring(scale, {
+      toValue: 0.97,
       useNativeDriver: true,
     }).start();
-  };
 
-  const onPressOut = () => {
-    Animated.spring(scaleValue, {
+  const pressOut = () =>
+    Animated.spring(scale, {
       toValue: 1,
+      friction: 4,
       useNativeDriver: true,
     }).start();
-  };
-
-  const IconLib = library === 'MaterialCommunityIcons' ? MaterialCommunityIcons : Ionicons;
 
   return (
-    <Animated.View style={{ transform: [{ scale: scaleValue }], width: '48%', marginBottom: 16 }}>
+    <Animated.View
+      style={{ transform: [{ scale }], width: '48%', marginBottom: 20 }}
+    >
       <TouchableOpacity
-        activeOpacity={1}
-        onPressIn={onPressIn}
-        onPressOut={onPressOut}
+        activeOpacity={0.85}
+        onPressIn={pressIn}
+        onPressOut={pressOut}
         onPress={onPress}
-        style={[styles.menuCard, { backgroundColor: theme.surface }]}
+        style={[
+          styles.menuCard,
+          { backgroundColor: theme.surface, ...shadow },
+        ]}
       >
-        <View style={[styles.iconContainer, { backgroundColor: color + '20' }]}>
-          <IconLib name={icon} size={28} color={color} />
+        <View style={[styles.iconContainer, { backgroundColor: color + '22' }]}> 
+          <IconLib name={icon} size={32} color={color} />
         </View>
-        <Text style={[styles.menuText, { color: theme.textPrimary }]}>{title}</Text>
-        <Ionicons name="chevron-forward" size={16} color={theme.textSecondary} style={{ marginTop: 8, opacity: 0.5 }} />
+
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.menuTitle, { color: theme.textPrimary }]}>
+            {title}
+          </Text>
+          <Text style={styles.menuSubtitle}>{subtitle}</Text>
+        </View>
+
+        <Ionicons
+          name="chevron-forward"
+          size={18}
+          color={theme.textSecondary}
+          style={{ alignSelf: 'flex-end', opacity: 0.5, marginTop: 8 }}
+        />
       </TouchableOpacity>
     </Animated.View>
   );
 };
 
-// Komponen Statistik Kecil
+/* =========================================================
+   STAT ITEM
+========================================================= */
 const StatItem = ({ label, value, icon, color }: any) => {
   const { theme } = useTheme();
   return (
-    <View style={[styles.statCard, { backgroundColor: theme.surface }]}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <View>
-          <Text style={[styles.statValue, { color: theme.textPrimary }]}>{value}</Text>
-          <Text style={[styles.statLabel, { color: theme.textSecondary }]}>{label}</Text>
-        </View>
-        <View style={[styles.statIcon, { backgroundColor: color + '15' }]}>
-          <Ionicons name={icon} size={18} color={color} />
-        </View>
+    <View style={[styles.statCard, { backgroundColor: theme.surface, ...shadow }]}> 
+      <View>
+        <Text style={[styles.statValue, { color: theme.textPrimary }]}>
+          {value}
+        </Text>
+        <Text style={[styles.statLabel, { color: theme.textSecondary }]}>
+          {label}
+        </Text>
+      </View>
+      <View style={[styles.statIcon, { backgroundColor: color + '18' }]}> 
+        <Ionicons name={icon} size={22} color={color} />
       </View>
     </View>
   );
@@ -68,232 +116,308 @@ const StatItem = ({ label, value, icon, color }: any) => {
 
 type AdminStackParamList = {
   AdminGroup: undefined;
-  // Tambahkan screen lain jika ada
 };
 
 export default function AdminHomeScreen() {
   const { theme } = useTheme();
-  const navigation = useNavigation<NativeStackNavigationProp<AdminStackParamList>>(); // Typed navigation
+  const navigation =
+    useNavigation<NativeStackNavigationProp<AdminStackParamList>>();
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
-      {/* 1. Header dengan Gradient */}
+      {/* ================= HEADER ================= */}
       <LinearGradient
-        colors={[theme.primary, theme.primary + 'CC']} // Gradient dari primary ke sedikit transparan
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.headerContainer}
+        colors={[theme.primary, theme.primary + 'E6']}
+        style={styles.header}
       >
-        <SafeAreaView edges={['top']} style={{ flex: 1 }}>
-          <View style={styles.headerContent}>
+        <SafeAreaView edges={['top']}>
+          <View style={styles.headerTop}>
             <View>
-              <Text style={styles.headerTitle}>Dashboard Admin</Text>
-              <Text style={styles.headerSubtitle}>Selamat datang kembali, Surya!</Text>
+              <Text style={styles.headerSubtitle}>
+                Selamat datang kembali, <Text style={{ fontWeight: 'bold', color: theme.accent || '#F59E0B' }}>Surya</Text>
+              </Text>
             </View>
-            <TouchableOpacity style={styles.profileButton}>
-               {/* Ganti dengan Image jika ada foto profil */}
-              <Ionicons name="person" size={20} color={theme.primary} />
+
+            <TouchableOpacity style={styles.avatar}>
+              <Image
+                source={{ uri: 'https://i.pravatar.cc/150?img=12' }}
+                style={styles.avatarImg}
+              />
             </TouchableOpacity>
           </View>
 
-          {/* 2. Statistik Utama (Overlay di Header) */}
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false} 
-            contentContainerStyle={styles.statsScroll}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.statsRow}
           >
-            <StatItem label="Mahasiswa" value="120" icon="people" color="#4F46E5" />
-            <StatItem label="Modul Aktif" value="8" icon="flask" color="#059669" />
-            <StatItem label="Selesai" value="15" icon="checkmark-circle" color="#D97706" />
+            <StatItem
+              label="Mahasiswa"
+              value="120"
+              icon="people"
+              color="#3B82F6"
+            />
+            <StatItem
+              label="Modul Aktif"
+              value="8"
+              icon="flask"
+              color="#10B981"
+            />
+            <StatItem
+              label="Selesai"
+              value="15"
+              icon="checkmark-circle"
+              color="#F59E0B"
+            />
+            <StatItem
+              label="Admin Aktif"
+              value="2"
+              icon="person"
+              color="#7C3AED"
+            />
           </ScrollView>
         </SafeAreaView>
       </LinearGradient>
 
-      {/* Konten Utama */}
-      <ScrollView contentContainerStyle={styles.mainContent}>
-        
-        {/* 3. Menu Grid */}
+      {/* ================= MAIN ================= */}
+      <ScrollView contentContainerStyle={styles.main}>
         <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Menu Utama</Text>
+
         <View style={styles.menuGrid}>
-          <MenuCard 
-            title="Pengumuman" 
-            icon="megaphone" 
-            color="#E11D48" 
-            onPress={() => console.log('Nav ke Pengumuman')} 
+          <MenuCard
+            title="Pengumuman"
+            subtitle="Info & pemberitahuan"
+            icon="megaphone"
+            color="#EF4444"
+            onPress={() => {}}
           />
-          <MenuCard 
-            title="Modul Praktikum" 
-            icon="document-text" 
-            color="#2563EB" 
-            onPress={() => console.log('Nav ke Modul')} 
+          <MenuCard
+            title="Modul Praktikum"
+            subtitle="Kelola modul"
+            icon="document-text"
+            color="#2563EB"
+            onPress={() => {}}
           />
-          <MenuCard 
-            title="Kelompok" 
-            icon="people" 
-            color="#7C3AED" 
-            onPress={() => navigation.navigate('AdminGroup')} // Contoh Navigasi
+          <MenuCard
+            title="Kelompok"
+            subtitle="Atur kelompok"
+            icon="people"
+            color="#7C3AED"
+            onPress={() => navigation.navigate('AdminGroup')}
           />
-          <MenuCard 
-            title="Penilaian" 
-            icon="clipboard-list-outline" 
-            library="MaterialCommunityIcons" 
-            color="#059669" 
-            onPress={() => console.log('Nav ke Penilaian')} 
+          <MenuCard
+            title="Penilaian"
+            subtitle="Evaluasi hasil"
+            icon="clipboard-list-outline"
+            library="MaterialCommunityIcons"
+            color="#059669"
+            onPress={() => {}}
           />
         </View>
 
-        {/* 4. Aktivitas Terbaru (Tambahan untuk UX Admin) */}
-        <Text style={[styles.sectionTitle, { color: theme.textPrimary, marginTop: 8 }]}>Aktivitas Terbaru</Text>
-        <View style={[styles.recentActivityCard, { backgroundColor: theme.surface }]}>
+        {/* Info Cards Section */}
+        <Text style={[styles.sectionTitle, { color: theme.textPrimary, marginTop: 24 }]}>Info Singkat</Text>
+        <View style={styles.infoRow}>
+          <View style={[styles.infoCard, { backgroundColor: '#EDE9FE', ...shadow }]}> 
+            <Ionicons name="calendar" size={28} color="#7C3AED" style={{ marginBottom: 8 }} />
+            <Text style={{ fontWeight: '700', fontSize: 15, color: '#7C3AED' }}>Jadwal Praktikum</Text>
+            <Text style={{ color: '#6B7280', fontSize: 12, marginTop: 2 }}>Senin & Rabu, 09:00 - 11:00</Text>
+          </View>
+          <View style={[styles.infoCard, { backgroundColor: '#FEF3C7', ...shadow }]}> 
+            <Ionicons name="trophy" size={28} color="#F59E0B" style={{ marginBottom: 8 }} />
+            <Text style={{ fontWeight: '700', fontSize: 15, color: '#F59E0B' }}>Top Group</Text>
+            <Text style={{ color: '#9CA3AF', fontSize: 12, marginTop: 2 }}>Kelompok 2 (95%)</Text>
+          </View>
+        </View>
+
+        {/* Recent Activity Section */}
+        <Text style={[styles.sectionTitle, { color: theme.textPrimary, marginTop: 24 }]}>Aktivitas Terbaru</Text>
+        <View style={[styles.activityCard, { backgroundColor: theme.surface, ...shadow }]}> 
           <View style={styles.activityItem}>
             <View style={[styles.dot, { backgroundColor: '#3B82F6' }]} />
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.activityText, { color: theme.textPrimary }]}>Kelompok 3 mengumpulkan Laporan</Text>
-              <Text style={styles.activityTime}>2 jam yang lalu</Text>
+            <View>
+              <Text style={[styles.activityText, { color: theme.textPrimary }]}>Kelompok 3 mengumpulkan laporan</Text>
+              <Text style={styles.activityTime}>2 jam lalu</Text>
             </View>
           </View>
-          <View style={[styles.divider, { backgroundColor: theme.border }]} />
+          <View style={styles.divider} />
           <View style={styles.activityItem}>
             <View style={[styles.dot, { backgroundColor: '#10B981' }]} />
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.activityText, { color: theme.textPrimary }]}>Modul 2 telah dipublikasikan</Text>
+            <View>
+              <Text style={[styles.activityText, { color: theme.textPrimary }]}>Modul 2 dipublikasikan</Text>
               <Text style={styles.activityTime}>Hari ini, 09:00</Text>
             </View>
           </View>
+          <View style={styles.divider} />
+          <View style={styles.activityItem}>
+            <View style={[styles.dot, { backgroundColor: '#F59E0B' }]} />
+            <View>
+              <Text style={[styles.activityText, { color: theme.textPrimary }]}>Penilaian modul 1 selesai</Text>
+              <Text style={styles.activityTime}>Kemarin, 16:30</Text>
+            </View>
+          </View>
         </View>
-
       </ScrollView>
     </View>
   );
 }
 
-const { width } = Dimensions.get('window');
-
+/* =========================================================
+   STYLES
+========================================================= */
 const styles = StyleSheet.create({
-  headerContainer: {
-    height: 240,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+  header: {
+    height: 270,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
     paddingHorizontal: 24,
-    marginBottom: 20,
+    paddingTop: 0,
   },
-  headerContent: {
+  headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 20,
     marginBottom: 24,
+    marginTop: 12,
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#FFF',
-    letterSpacing: 0.5,
-  },
+  // headerTitle removed
   headerSubtitle: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.9)',
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.92)',
     marginTop: 4,
+    fontWeight: '500',
   },
-  profileButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     backgroundColor: '#FFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
+    ...shadow,
   },
-  statsScroll: {
-    paddingRight: 20,
-    paddingBottom: 20,
+  avatarImg: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 25,
+  },
+  statsRow: {
+    paddingBottom: 16,
+    paddingTop: 2,
+    paddingLeft: 2,
   },
   statCard: {
     width: 140,
-    height: 80,
-    borderRadius: 16,
+    height: 90,
+    borderRadius: 18,
     padding: 16,
-    marginRight: 12,
-    justifyContent: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
+    marginRight: 14,
+    justifyContent: 'space-between',
+    backgroundColor: '#FFF',
   },
   statValue: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: '800',
+    letterSpacing: 0.1,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 13,
+    fontWeight: '500',
+    marginTop: 2,
   },
   statIcon: {
-    padding: 8,
-    borderRadius: 8,
+    alignSelf: 'flex-end',
+    padding: 9,
+    borderRadius: 12,
   },
-  mainContent: {
-    paddingHorizontal: 24,
-    paddingBottom: 40,
-    paddingTop: 40, // Memberi ruang karena header overlap
+  main: {
+    padding: 24,
+    paddingTop: 36,
+    paddingBottom: 50,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
     marginBottom: 16,
+    letterSpacing: 0.1,
   },
   menuGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    marginBottom: 8,
   },
   menuCard: {
-    borderRadius: 20,
+    height: 155,
+    borderRadius: 22,
     padding: 20,
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-    height: 140,
-    elevation: 2,
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
+    justifyContent: 'space-between',
+    backgroundColor: '#FFF',
+    marginBottom: 0,
   },
   iconContainer: {
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  menuText: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  recentActivityCard: {
+    padding: 15,
     borderRadius: 16,
+    marginBottom: 10,
+    alignSelf: 'flex-start',
+  },
+  menuTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  menuSubtitle: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    marginTop: 2,
+  },
+  infoCard: {
+    flex: 1,
+    borderRadius: 20,
+    padding: 18,
+    marginRight: 12,
+    alignItems: 'flex-start',
+    minWidth: 140,
+    maxWidth: 180,
+  },
+  activityCard: {
+    borderRadius: 18,
     padding: 20,
-    elevation: 2,
+    marginTop: 4,
+    backgroundColor: '#FFF',
   },
   activityItem: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    marginBottom: 2,
   },
   dot: {
     width: 8,
     height: 8,
     borderRadius: 4,
     marginRight: 12,
+    marginTop: 7,
   },
   activityText: {
     fontSize: 14,
     fontWeight: '600',
+    letterSpacing: 0.05,
   },
   activityTime: {
     fontSize: 12,
-    color: '#999',
+    color: '#9CA3AF',
     marginTop: 2,
+    fontWeight: '500',
   },
   divider: {
     height: 1,
-    marginVertical: 12,
+    backgroundColor: '#E5E7EB',
+    marginVertical: 14,
     marginLeft: 20,
   },
 });
