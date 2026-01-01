@@ -41,7 +41,7 @@ export function Button({
   children,
   style,
 }: ButtonProps) {
-  const { theme } = useTheme()
+  const { theme, isDark } = useTheme()
   
   // Animation values
   const pressed = useSharedValue(0)
@@ -66,9 +66,6 @@ export function Button({
       }
     }
 
-    const isDark = (theme.background || '').toLowerCase() === '#0f0e1a';
-
-    // For dark mode, always use #1E1B4B for text/icon
     if (isDark) {
       return {
         bg: (() => {

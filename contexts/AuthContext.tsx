@@ -41,9 +41,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (forceAdmin) {
         // Paksa cek endpoint admin saja
         try {
-          const response = await api.get<User>(endpoints.auth.me)
+          const response = await api.get<{ user: User } | User>(endpoints.auth.me)
           if (response.success && response.data) {
-            setUser(response.data)
+            const userData = 'user' in response.data ? response.data.user : response.data
+            setUser(userData)
             return
           }
         } catch {
@@ -56,9 +57,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Default: coba student dulu, lalu admin
       try {
-        const response = await api.get<Student>(endpoints.auth.studentMe)
+        const response = await api.get<{ user: Student } | Student>(endpoints.auth.studentMe)
         if (response.success && response.data) {
-          setUser(response.data)
+          const userData = 'user' in response.data ? response.data.user : response.data
+          setUser(userData)
           return
         }
       } catch {
@@ -66,9 +68,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        const response = await api.get<User>(endpoints.auth.me)
+        const response = await api.get<{ user: User } | User>(endpoints.auth.me)
         if (response.success && response.data) {
-          setUser(response.data)
+          const userData = 'user' in response.data ? response.data.user : response.data
+          setUser(userData)
           return
         }
       } catch {

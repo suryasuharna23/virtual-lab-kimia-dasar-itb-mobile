@@ -26,13 +26,16 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     const inAuthSelection = (segments[0] as string) === 'auth-selection'
     const inAdmin = (segments[0] as string) === 'admin'
     const inTabs = (segments[0] as string) === '(tabs)'
+    
+    const allowedStudentRoutes = ['nametag', 'profile', 'offline-files', 'about', 'faq', 'kontak', 'search', 'pdf-viewer', 'pengumuman']
+    const isAllowedStudentRoute = allowedStudentRoutes.includes(segments[0] as string)
 
     if (!isAuthenticated && !inAuthGroup && !inAuthSelection && !inAdmin) {
       router.replace('/auth-selection' as any)
     } else if (isAuthenticated) {
       if (isAdmin && !inAdmin) {
         router.replace('/admin' as any)
-      } else if (isStudent && !inTabs) {
+      } else if (isStudent && !inTabs && !isAllowedStudentRoute) {
         router.replace('/(tabs)' as any)
       }
     }

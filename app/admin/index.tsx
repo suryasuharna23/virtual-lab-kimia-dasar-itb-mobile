@@ -13,8 +13,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Text } from '@/components/ui';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useRouter } from 'expo-router';
 
 // Helper for shadow style
 const shadow = {
@@ -114,14 +113,9 @@ const StatItem = ({ label, value, icon, color }: any) => {
   );
 };
 
-type AdminStackParamList = {
-  AdminGroup: undefined;
-};
-
 export default function AdminHomeScreen() {
   const { theme } = useTheme();
-  const navigation =
-    useNavigation<NativeStackNavigationProp<AdminStackParamList>>();
+  const router = useRouter();
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
@@ -189,21 +183,21 @@ export default function AdminHomeScreen() {
             subtitle="Info & pemberitahuan"
             icon="megaphone"
             color="#EF4444"
-            onPress={() => {}}
+            onPress={() => router.push('/admin/announcement')}
           />
           <MenuCard
             title="Modul Praktikum"
             subtitle="Kelola modul"
             icon="document-text"
             color="#2563EB"
-            onPress={() => {}}
+            onPress={() => router.push('/admin/module')}
           />
           <MenuCard
             title="Kelompok"
             subtitle="Atur kelompok"
             icon="people"
             color="#7C3AED"
-            onPress={() => navigation.navigate('AdminGroup')}
+            onPress={() => router.push('/admin/group')}
           />
           <MenuCard
             title="Penilaian"
@@ -211,7 +205,7 @@ export default function AdminHomeScreen() {
             icon="clipboard-list-outline"
             library="MaterialCommunityIcons"
             color="#059669"
-            onPress={() => {}}
+            onPress={() => router.push('/admin/penilaian' as any)}
           />
         </View>
 

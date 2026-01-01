@@ -9,7 +9,7 @@ class ApiClient {
     this.baseURL = baseURL
   }
 
-  private async getAuthToken(): Promise<string | null> {
+  async getAuthToken(): Promise<string | null> {
     try {
       return await SecureStore.getItemAsync('auth_token')
     } catch {

@@ -145,7 +145,7 @@ export function AttendanceCard({
         variant="primary"
         fullWidth
         size="md"
-        leftIcon={<Ionicons name="qr-code" size={18} color={(theme.background || '').toLowerCase() === '#0f0e1a' ? '#1E1B4B' : colors.white} />}
+        leftIcon={<Ionicons name="qr-code" size={18} color={colors.white} />}
       >
         Tampilkan Nametag
       </Button>

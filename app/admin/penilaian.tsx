@@ -10,6 +10,7 @@ import {
   RefreshControl,
   KeyboardAvoidingView,
   Platform,
+  Switch,
 } from 'react-native'
 import * as DocumentPicker from 'expo-document-picker'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -20,40 +21,41 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { Text, Card, Button, LoadingSpinner, Badge } from '@/components/ui'
 import { api } from '@/lib/api'
 import { endpoints, API_BASE_URL } from '@/constants/api'
-import { downloadModule, shareFile } from '@/lib/download'
+import { downloadNilai, shareFile } from '@/lib/download'
 import { colors, spacing, borderRadius } from '@/constants/theme'
-import type { Module } from '@/types'
+import type { NilaiFile } from '@/types'
 
-export default function AdminModuleScreen() {
+export default function AdminPenilaianScreen() {
   const { theme } = useTheme()
   const router = useRouter()
-  const [modules, setModules] = useState<Module[]>([])
+  const [nilaiFiles, setNilaiFiles] = useState<NilaiFile[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
   const [showUpload, setShowUpload] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [downloadingId, setDownloadingId] = useState<string | number | null>(null)
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
+  const [className, setClassName] = useState('')
+  const [cohort, setCohort] = useState('')
+  const [password, setPassword] = useState('')
+  const [hasPassword, setHasPassword] = useState(false)
   const [file, setFile] = useState<DocumentPicker.DocumentPickerResult | null>(null)
   const [editId, setEditId] = useState<string | number | null>(null)
-  const [visibility, setVisibility] = useState('public')
 
-  const fetchModules = useCallback(async () => {
+  const fetchNilaiFiles = useCallback(async () => {
     try {
       setError('')
-      const response = await api.getWithQuery<Module[]>(endpoints.modules.list, {
+      const response = await api.getWithQuery<NilaiFile[]>(endpoints.nilai.list, {
         page: 1,
         limit: 50,
       })
       if (response.success && response.data) {
-        setModules(response.data)
+        setNilaiFiles(response.data)
       } else {
-        setError(response.message || 'Gagal mengambil data modul')
+        setError(response.message || 'Gagal mengambil data nilai')
       }
     } catch (e) {
-      setError('Gagal mengambil data modul')
+      setError('Gagal mengambil data nilai')
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -61,25 +63,27 @@ export default function AdminModuleScreen() {
   }, [])
 
   useEffect(() => {
-    fetchModules()
-  }, [fetchModules])
+    fetchNilaiFiles()
+  }, [fetchNilaiFiles])
 
   const onRefresh = useCallback(() => {
     setRefreshing(true)
-    fetchModules()
-  }, [fetchModules])
+    fetchNilaiFiles()
+  }, [fetchNilaiFiles])
 
   const handleUpload = async () => {
-    if (!title || !description || !file) {
-      Alert.alert('Error', 'Judul, deskripsi, dan file wajib diisi')
+    if (!className || !cohort || !file) {
+      Alert.alert('Error', 'Kelas, angkatan, dan file wajib diisi')
       return
     }
     setUploading(true)
     try {
       const formData = new FormData()
-      formData.append('title', title)
-      formData.append('description', description)
-      formData.append('visibility', visibility)
+      formData.append('class', className)
+      formData.append('cohort', cohort)
+      if (hasPassword && password) {
+        formData.append('password', password)
+      }
       if (file && 'assets' in file && file.assets && file.assets.length > 0) {
         const pickedFile = file.assets[0]
         formData.append('file', {
@@ -89,7 +93,7 @@ export default function AdminModuleScreen() {
         } as unknown as Blob)
       }
 
-      const response = await fetch(`${API_BASE_URL}${endpoints.modules.list}`, {
+      const response = await fetch(`${API_BASE_URL}${endpoints.nilai.list}`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${await api.getAuthToken?.()}`,
@@ -99,105 +103,117 @@ export default function AdminModuleScreen() {
       const json = await response.json()
 
       if (json.success) {
-        Alert.alert('Sukses', 'Modul berhasil diupload')
+        Alert.alert('Sukses', 'File nilai berhasil diupload')
         closeModal()
-        fetchModules()
+        fetchNilaiFiles()
       } else {
-        Alert.alert('Error', json.message || 'Gagal upload modul')
+        Alert.alert('Error', json.message || 'Gagal upload file nilai')
       }
     } catch (e) {
-      Alert.alert('Error', 'Gagal upload modul')
+      Alert.alert('Error', 'Gagal upload file nilai')
     } finally {
       setUploading(false)
     }
   }
 
   const handleEdit = async () => {
-    if (!title || !description) {
-      Alert.alert('Error', 'Judul dan deskripsi wajib diisi')
+    if (!className || !cohort) {
+      Alert.alert('Error', 'Kelas dan angkatan wajib diisi')
       return
     }
     setUploading(true)
     try {
-      const response = await api.put(endpoints.modules.get(editId!), {
-        title,
-        description,
-        visibility,
-      })
+      const updateData: Record<string, string | boolean | null> = {
+        class: className,
+        cohort: cohort,
+      }
+      
+      if (hasPassword && password) {
+        updateData.password = password
+      } else if (!hasPassword) {
+        updateData.password = ''
+      }
+
+      const response = await api.put(endpoints.nilai.get(editId!), updateData)
       if (response.success) {
-        Alert.alert('Sukses', 'Modul berhasil diedit')
+        Alert.alert('Sukses', 'File nilai berhasil diedit')
         closeModal()
-        fetchModules()
+        fetchNilaiFiles()
       } else {
-        Alert.alert('Error', response.message || 'Gagal edit modul')
+        Alert.alert('Error', response.message || 'Gagal edit file nilai')
       }
     } catch (e) {
-      Alert.alert('Error', 'Gagal edit modul')
+      Alert.alert('Error', 'Gagal edit file nilai')
     } finally {
       setUploading(false)
     }
   }
 
   const handleDelete = async (id: string | number) => {
-    Alert.alert('Konfirmasi', 'Yakin ingin menghapus modul ini?', [
+    Alert.alert('Konfirmasi', 'Yakin ingin menghapus file nilai ini?', [
       { text: 'Batal', style: 'cancel' },
       {
         text: 'Hapus',
         style: 'destructive',
         onPress: async () => {
           try {
-            const response = await api.delete(endpoints.modules.get(id))
+            const response = await api.delete(endpoints.nilai.get(id))
             if (response.success) {
-              Alert.alert('Sukses', 'Modul berhasil dihapus')
-              fetchModules()
+              Alert.alert('Sukses', 'File nilai berhasil dihapus')
+              fetchNilaiFiles()
             } else {
-              Alert.alert('Error', response.message || 'Gagal hapus modul')
+              Alert.alert('Error', response.message || 'Gagal hapus file nilai')
             }
           } catch (e) {
-            Alert.alert('Error', 'Gagal hapus modul')
+            Alert.alert('Error', 'Gagal hapus file nilai')
           }
         },
       },
     ])
   }
 
-  const handleDownload = async (module: Module) => {
+  const handleDownload = async (nilai: NilaiFile) => {
     try {
-      setDownloadingId(module.id)
-      const localUri = await downloadModule(module.id, module.title, {
+      setDownloadingId(nilai.id)
+      const fileName = `Nilai_${nilai.class}_${nilai.cohort}`
+      const localUri = await downloadNilai(nilai.id, fileName, {
         showShareDialog: true,
       })
       if (localUri) {
         Alert.alert('Berhasil', 'File berhasil didownload dan dibagikan')
       }
     } catch (e) {
-      Alert.alert('Error', 'Gagal download modul')
+      Alert.alert('Error', 'Gagal download file nilai')
     } finally {
       setDownloadingId(null)
     }
   }
 
   const pickFile = async () => {
-    const result = await DocumentPicker.getDocumentAsync({ type: 'application/pdf' })
+    const result = await DocumentPicker.getDocumentAsync({ 
+      type: ['application/pdf', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
+    })
     if (!result.canceled && result.assets && result.assets.length > 0) {
       setFile(result)
     }
   }
 
-  const openEdit = (modul: Module) => {
-    setEditId(modul.id)
-    setTitle(modul.title)
-    setDescription(modul.description || '')
-    setVisibility(modul.visibility || 'public')
+  const openEdit = (nilai: NilaiFile) => {
+    setEditId(nilai.id)
+    setClassName(nilai.class)
+    setCohort(nilai.cohort)
+    setHasPassword(nilai.has_password)
+    setPassword('')
     setFile(null)
     setShowUpload(true)
   }
 
   const openUpload = () => {
     setEditId(null)
-    setTitle('')
-    setDescription('')
-    setVisibility('public')
+    setClassName('')
+    setCohort('')
+    setHasPassword(false)
+    setPassword('')
     setFile(null)
     setShowUpload(true)
   }
@@ -205,9 +221,10 @@ export default function AdminModuleScreen() {
   const closeModal = () => {
     setShowUpload(false)
     setEditId(null)
-    setTitle('')
-    setDescription('')
-    setVisibility('public')
+    setClassName('')
+    setCohort('')
+    setHasPassword(false)
+    setPassword('')
     setFile(null)
   }
 
@@ -215,10 +232,10 @@ export default function AdminModuleScreen() {
     <View style={styles.headerContainer}>
       <View>
         <Text variant="h2" style={{ color: theme.textPrimary, fontWeight: '800' }}>
-          Modul Praktikum
+          Penilaian
         </Text>
         <Text style={{ color: theme.textSecondary, marginTop: 4 }}>
-          Kelola modul pembelajaran praktikan
+          Kelola file nilai praktikum
         </Text>
       </View>
       <Button
@@ -233,7 +250,7 @@ export default function AdminModuleScreen() {
     </View>
   )
 
-  const renderItem = ({ item, index }: { item: Module; index: number }) => {
+  const renderItem = ({ item, index }: { item: NilaiFile; index: number }) => {
     const isDownloading = downloadingId === item.id
 
     return (
@@ -242,34 +259,34 @@ export default function AdminModuleScreen() {
           <View style={styles.cardContent}>
             <View
               style={[
-                styles.moduleNumber,
+                styles.nilaiIcon,
                 { backgroundColor: index % 2 === 0 ? theme.primarySoft : colors.accentSoft },
               ]}
             >
               <Ionicons
-                name="document-text"
+                name="school"
                 size={24}
                 color={index % 2 === 0 ? theme.primary : colors.accent}
               />
             </View>
 
-            <View style={styles.moduleInfo}>
+            <View style={styles.nilaiInfo}>
               <Text
                 variant="bodyLarge"
                 style={{ color: theme.textPrimary, fontWeight: '700' }}
                 numberOfLines={1}
               >
-                {item.title}
+                {item.class}
               </Text>
-              <Text variant="caption" style={{ color: theme.textSecondary }} numberOfLines={2}>
-                {item.description || 'Tidak ada deskripsi'}
+              <Text variant="caption" style={{ color: theme.textSecondary }} numberOfLines={1}>
+                Angkatan {item.cohort}
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 8 }}>
                 <Badge
-                  variant={item.visibility === 'public' ? 'success' : 'warning'}
+                  variant={item.has_password ? 'warning' : 'success'}
                   size="sm"
                 >
-                  {item.visibility === 'public' ? 'Publik' : 'Privat'}
+                  {item.has_password ? 'Dilindungi' : 'Publik'}
                 </Badge>
                 {item.file_size && (
                   <Badge variant="info" size="sm">
@@ -313,15 +330,15 @@ export default function AdminModuleScreen() {
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
       <View style={[styles.iconCircle, { backgroundColor: theme.border }]}>
-        <Ionicons name="document-text-outline" size={40} color={theme.textMuted} />
+        <Ionicons name="school-outline" size={40} color={theme.textMuted} />
       </View>
       <Text variant="h4" style={{ color: theme.textPrimary, marginTop: 16 }}>
-        Belum ada modul
+        Belum ada file nilai
       </Text>
       <Text
         style={{ color: theme.textSecondary, textAlign: 'center', marginTop: 8, maxWidth: '80%' }}
       >
-        Tap tombol "Baru" di atas untuk menambahkan modul praktikum.
+        Tap tombol "Baru" di atas untuk menambahkan file nilai praktikum.
       </Text>
     </View>
   )
@@ -337,7 +354,7 @@ export default function AdminModuleScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }} edges={['top']}>
       <FlatList
-        data={modules}
+        data={nilaiFiles}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}
         contentContainerStyle={styles.listContent}
@@ -357,7 +374,7 @@ export default function AdminModuleScreen() {
           <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
             <View style={styles.modalHeader}>
               <Text variant="h3" style={{ color: theme.textPrimary }}>
-                {editId ? 'Edit Modul' : 'Upload Modul Baru'}
+                {editId ? 'Edit File Nilai' : 'Upload File Nilai Baru'}
               </Text>
               <TouchableOpacity onPress={closeModal}>
                 <Ionicons name="close-circle" size={28} color={theme.textMuted} />
@@ -365,12 +382,12 @@ export default function AdminModuleScreen() {
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>JUDUL</Text>
+              <Text style={styles.label}>KELAS</Text>
               <TextInput
-                placeholder="Contoh: Modul 1 - Pengenalan Lab"
+                placeholder="Contoh: TPB A, KIM-01"
                 placeholderTextColor={theme.textMuted}
-                value={title}
-                onChangeText={setTitle}
+                value={className}
+                onChangeText={setClassName}
                 style={[
                   styles.input,
                   { borderColor: theme.border, color: theme.textPrimary, backgroundColor: theme.background },
@@ -379,82 +396,61 @@ export default function AdminModuleScreen() {
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>DESKRIPSI</Text>
+              <Text style={styles.label}>ANGKATAN</Text>
               <TextInput
-                placeholder="Deskripsi singkat modul..."
+                placeholder="Contoh: 2024, 2025"
                 placeholderTextColor={theme.textMuted}
-                value={description}
-                onChangeText={setDescription}
-                multiline
+                value={cohort}
+                onChangeText={setCohort}
+                keyboardType="numeric"
                 style={[
                   styles.input,
-                  styles.textArea,
                   { borderColor: theme.border, color: theme.textPrimary, backgroundColor: theme.background },
                 ]}
               />
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>VISIBILITAS</Text>
-              <View style={{ flexDirection: 'row', gap: 12 }}>
-                <TouchableOpacity
-                  onPress={() => setVisibility('public')}
-                  style={[
-                    styles.visibilityOption,
-                    {
-                      backgroundColor: visibility === 'public' ? theme.primarySoft : theme.background,
-                      borderColor: visibility === 'public' ? theme.primary : theme.border,
-                    },
-                  ]}
-                >
-                  <Ionicons
-                    name="globe-outline"
-                    size={20}
-                    color={visibility === 'public' ? theme.primary : theme.textSecondary}
-                  />
-                  <Text
-                    style={{
-                      color: visibility === 'public' ? theme.primary : theme.textSecondary,
-                      fontWeight: '600',
-                    }}
-                  >
-                    Publik
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <View>
+                  <Text style={styles.label}>PROTEKSI PASSWORD</Text>
+                  <Text style={{ color: theme.textSecondary, fontSize: 12 }}>
+                    {hasPassword ? 'File dilindungi password' : 'File dapat diakses publik'}
                   </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => setVisibility('private')}
-                  style={[
-                    styles.visibilityOption,
-                    {
-                      backgroundColor: visibility === 'private' ? colors.warningSoft : theme.background,
-                      borderColor: visibility === 'private' ? colors.warning : theme.border,
-                    },
-                  ]}
-                >
-                  <Ionicons
-                    name="lock-closed-outline"
-                    size={20}
-                    color={visibility === 'private' ? colors.warning : theme.textSecondary}
-                  />
-                  <Text
-                    style={{
-                      color: visibility === 'private' ? colors.warning : theme.textSecondary,
-                      fontWeight: '600',
-                    }}
-                  >
-                    Privat
-                  </Text>
-                </TouchableOpacity>
+                </View>
+                <Switch
+                  value={hasPassword}
+                  onValueChange={setHasPassword}
+                  trackColor={{ false: theme.border, true: theme.primary }}
+                  thumbColor={hasPassword ? colors.white : theme.textMuted}
+                />
               </View>
             </View>
 
+            {hasPassword && (
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>PASSWORD</Text>
+                <TextInput
+                  placeholder={editId ? 'Kosongkan jika tidak ingin mengubah' : 'Masukkan password'}
+                  placeholderTextColor={theme.textMuted}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                  style={[
+                    styles.input,
+                    { borderColor: theme.border, color: theme.textPrimary, backgroundColor: theme.background },
+                  ]}
+                />
+              </View>
+            )}
+
             {!editId && (
               <View style={styles.formGroup}>
-                <Text style={styles.label}>FILE PDF</Text>
+                <Text style={styles.label}>FILE</Text>
                 <Button variant="secondary" onPress={pickFile} style={{ marginBottom: 0 }}>
                   {file && 'assets' in file && file.assets && file.assets.length > 0
-                    ? `📄 ${file.assets[0].name}`
-                    : '📁 Pilih File PDF'}
+                    ? `${file.assets[0].name}`
+                    : 'Pilih File (PDF/Excel)'}
                 </Button>
               </View>
             )}
@@ -466,7 +462,7 @@ export default function AdminModuleScreen() {
               loading={uploading}
               style={{ marginTop: 16 }}
             >
-              {editId ? 'Simpan Perubahan' : 'Upload Modul'}
+              {editId ? 'Simpan Perubahan' : 'Upload File Nilai'}
             </Button>
           </View>
         </KeyboardAvoidingView>
@@ -503,14 +499,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
   },
-  moduleNumber: {
+  nilaiIcon: {
     width: 48,
     height: 48,
     borderRadius: borderRadius.lg,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  moduleInfo: {
+  nilaiInfo: {
     flex: 1,
     gap: 2,
   },
@@ -570,19 +566,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
-  },
-  textArea: {
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-  visibilityOption: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
   },
 })

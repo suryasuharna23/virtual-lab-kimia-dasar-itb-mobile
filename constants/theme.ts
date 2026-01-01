@@ -67,6 +67,14 @@ export interface Theme {
   accentLight: string
   accentDark: string
   accentSoft: string
+  success: string
+  successSoft: string
+  warning: string
+  warningSoft: string
+  error: string
+  errorSoft: string
+  info: string
+  infoSoft: string
 }
 
 export const lightTheme: Theme = {
@@ -88,6 +96,14 @@ export const lightTheme: Theme = {
   accentLight: colors.accentLight,
   accentDark: colors.accentDark,
   accentSoft: colors.accentSoft,
+  success: colors.success,
+  successSoft: colors.successSoft,
+  warning: colors.warning,
+  warningSoft: colors.warningSoft,
+  error: colors.error,
+  errorSoft: colors.errorSoft,
+  info: colors.info,
+  infoSoft: colors.infoSoft,
 }
 
 export const darkTheme: Theme = {
@@ -109,6 +125,14 @@ export const darkTheme: Theme = {
   accentLight: colors.accentLight,
   accentDark: colors.accentDark,
   accentSoft: '#422006',
+  success: colors.success,
+  successSoft: colors.successDark, 
+  warning: colors.warning,
+  warningSoft: colors.warningDark,
+  error: colors.error,
+  errorSoft: colors.errorDark,
+  info: colors.info,
+  infoSoft: colors.infoDark,
 }
 
 // === TYPOGRAPHY ===

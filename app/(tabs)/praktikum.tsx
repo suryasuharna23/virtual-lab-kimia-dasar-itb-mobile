@@ -9,7 +9,6 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { Paths, File } from 'expo-file-system'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useFocusEffect, useRouter } from 'expo-router'
 import {
@@ -21,6 +20,7 @@ import {
 import { useTheme } from '@/contexts/ThemeContext'
 import { api } from '@/lib/api'
 import { endpoints } from '@/constants/api'
+import { downloadToCache } from '@/lib/download'
 import type { Module, Group } from '@/types'
 import { layout, spacing, borderRadius, colors, shadows } from '@/constants/theme'
 import Animated, { FadeInDown } from 'react-native-reanimated'
@@ -82,7 +82,6 @@ export default function PraktikumScreen() {
     fetchData()
   }, [fetchData])
 
-  // Reload offline files when screen is focused (e.g., after deleting from offline-files screen)
   useFocusEffect(
     useCallback(() => {
       loadOfflineFiles()
@@ -103,15 +102,6 @@ export default function PraktikumScreen() {
       const offlineFile = offlineFiles.find(f => f.id === String(module.id))
       if (offlineFile) {
         try {
-          const file = new File(offlineFile.localPath)
-          const exists = file.exists ?? false
-          if (!exists) {
-            const updatedFiles = offlineFiles.filter(f => f.id !== String(module.id))
-            await AsyncStorage.setItem(OFFLINE_FILES_KEY, JSON.stringify(updatedFiles))
-            setOfflineFiles(updatedFiles)
-            Alert.alert('File Tidak Ditemukan', 'File telah dihapus. Silakan unduh ulang.')
-            return
-          }
           const response = await api.get<{ download_url: string; expires_at: string }>(
             endpoints.modules.download(module.id)
           )
@@ -148,21 +138,13 @@ export default function PraktikumScreen() {
 
       const downloadUrl = response.data.download_url
       const fileName = `modul_${module.id}_${Date.now()}.pdf`
-      const file = new File(Paths.cache, fileName)
       
-      const fetchResponse = await fetch(downloadUrl)
-      if (!fetchResponse.ok) {
-        throw new Error('DOWNLOAD_FAILED')
-      }
-      
-      const arrayBuffer = await fetchResponse.arrayBuffer()
-      const uint8Array = new Uint8Array(arrayBuffer)
-      file.write(uint8Array)
+      const localUri = await downloadToCache(downloadUrl, fileName)
 
       const newOfflineFile: OfflineFile = {
         id: String(module.id),
         name: module.title,
-        localPath: file.uri,
+        localPath: localUri,
         type: 'module',
         downloadedAt: new Date().toISOString(),
         size: module.file_size || 0,
@@ -173,7 +155,7 @@ export default function PraktikumScreen() {
       setOfflineFiles(updatedFiles)
 
       Alert.alert(
-        'Berhasil! ✓',
+        'Berhasil!',
         `${module.title} berhasil diunduh dan tersimpan offline.`,
         [
           { text: 'OK' },
@@ -184,7 +166,7 @@ export default function PraktikumScreen() {
               params: { 
                 uri: downloadUrl, 
                 title: module.title,
-                localPath: file.uri 
+                localPath: localUri 
               }
             } as any)
           }
@@ -206,15 +188,6 @@ export default function PraktikumScreen() {
       const offlineFile = offlineFiles.find(f => f.id === `group_${group.id}`)
       if (offlineFile) {
         try {
-          const file = new File(offlineFile.localPath)
-          const exists = file.exists ?? false
-          if (!exists) {
-            const updatedFiles = offlineFiles.filter(f => f.id !== `group_${group.id}`)
-            await AsyncStorage.setItem(OFFLINE_FILES_KEY, JSON.stringify(updatedFiles))
-            setOfflineFiles(updatedFiles)
-            Alert.alert('File Tidak Ditemukan', 'File telah dihapus. Silakan unduh ulang.')
-            return
-          }
           const response = await api.get<{ download_url: string; expires_at: string }>(
             endpoints.groups.download(group.id)
           )
@@ -256,21 +229,13 @@ export default function PraktikumScreen() {
 
       const downloadUrl = response.data.download_url
       const fileName = `group_${group.id}_${Date.now()}.pdf`
-      const file = new File(Paths.cache, fileName)
       
-      const fetchResponse = await fetch(downloadUrl)
-      if (!fetchResponse.ok) {
-        throw new Error('DOWNLOAD_FAILED')
-      }
-      
-      const arrayBuffer = await fetchResponse.arrayBuffer()
-      const uint8Array = new Uint8Array(arrayBuffer)
-      file.write(uint8Array)
+      const localUri = await downloadToCache(downloadUrl, fileName)
 
       const newOfflineFile: OfflineFile = {
         id: `group_${group.id}`,
         name: group.name,
-        localPath: file.uri,
+        localPath: localUri,
         type: 'group',
         downloadedAt: new Date().toISOString(),
         size: group.file_size || 0,
@@ -281,7 +246,7 @@ export default function PraktikumScreen() {
       setOfflineFiles(updatedFiles)
 
       Alert.alert(
-        'Berhasil! ✓',
+        'Berhasil!',
         `${group.name} berhasil diunduh dan tersimpan offline.`,
         [
           { text: 'OK' },
@@ -292,7 +257,7 @@ export default function PraktikumScreen() {
               params: { 
                 uri: downloadUrl, 
                 title: group.name,
-                localPath: file.uri 
+                localPath: localUri 
               }
             } as any)
           }
@@ -391,7 +356,7 @@ export default function PraktikumScreen() {
             Praktikum
           </Text>
           <Text variant="body" style={{ color: theme.textSecondary }}>
-            Pelajari semua modul praktikum dengan baik! 💪
+            Pelajari semua modul praktikum dengan baik!
           </Text>
         </View>
 

@@ -3,10 +3,13 @@ import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '@/contexts/ThemeContext'
 import { HapticTab } from '@/components/haptic-tab'
 import { Platform, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { shadows } from '@/constants/theme'
 
 export default function TabLayout() {
   const { theme } = useTheme()
+  const insets = useSafeAreaInsets()
+  const bottomInset = Platform.OS === 'ios' ? Math.max(insets.bottom, 16) : 16
 
   return (
     <Tabs
@@ -18,8 +21,7 @@ export default function TabLayout() {
           borderTopWidth: 0,
           borderRadius: 24,
           marginHorizontal: 16,
-          marginBottom: Platform.OS === 'ios' ? 24 : 16,
-          position: 'absolute',
+          marginBottom: bottomInset,
           height: 64,
           paddingBottom: 0,
           paddingTop: 0,

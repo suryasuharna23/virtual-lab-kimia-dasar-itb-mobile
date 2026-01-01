@@ -147,7 +147,7 @@ export default function HomeScreen() {
                   variant="bodySmall" 
                   weight="bold" 
                   style={{ color: theme.primary }}
-                  onPress={() => router.push('/praktikum' as any)}
+                  onPress={() => router.push('/(tabs)/praktikum' as any)}
                 >
                   Lihat semua
                 </Text>
@@ -171,7 +171,7 @@ export default function HomeScreen() {
                     iconName={getModuleIcon(index) as any}
                     iconColor={colors.white}
                     iconBgColor={getModuleColor(index)}
-                    onPress={() => router.push('/praktikum' as any)}
+                  onPress={() => router.push('/(tabs)/praktikum' as any)}
                   />
                 </Animated.View>
               ))
@@ -208,7 +208,7 @@ export default function HomeScreen() {
                     <Text weight="bold">Nametag</Text>
                 </Card>
                 <Card 
-                  onPress={() => router.push('/pengumuman' as any)}
+                  onPress={() => router.push('/(tabs)/pengumuman' as any)}
                   style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: 120 }}
                 >
                      <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: colors.infoSoft, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm }}>
