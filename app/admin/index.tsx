@@ -1,417 +1,447 @@
-import React, { useRef } from 'react';
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Animated,
-  Image,
+import React, { useState, useEffect, useCallback } from 'react';
+import { 
+  View, 
+  StyleSheet, 
+  Modal, 
+  TextInput, 
+  Alert, 
+  Switch, 
+  FlatList, 
+  RefreshControl,
+  KeyboardAvoidingView,
+  Platform,
   Dimensions,
+  TouchableOpacity
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
-import { Text } from '@/components/ui';
-import { useRouter } from 'expo-router';
+import { Text, Card, Button, LoadingSpinner, Badge } from '@/components/ui';
+import { api } from '@/lib/api';
+import { endpoints } from '@/constants/api';
+import type { Announcement } from '@/types';
 
-// Helper for shadow style
-const shadow = {
-  shadowColor: '#1E1B4B',
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.10,
-  shadowRadius: 12,
-  elevation: 6,
+// Helper sederhana untuk format tanggal (Opsional, sesuaikan dengan library date Anda seperti dayjs/date-fns)
+const formatDate = (dateString?: string) => {
+  if (!dateString) return 'Baru saja';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute:'2-digit' });
 };
 
-/* =========================================================
-   MENU CARD
-========================================================= */
-const MenuCard = ({
-  title,
-  subtitle,
-  icon,
-  color,
-  library,
-  onPress,
-}: any) => {
-  const scale = useRef(new Animated.Value(1)).current;
+export default function AdminAnnouncementScreen() {
   const { theme } = useTheme();
-  const IconLib =
-    library === 'MaterialCommunityIcons'
-      ? MaterialCommunityIcons
-      : Ionicons;
 
-  const pressIn = () =>
-    Animated.spring(scale, {
-      toValue: 0.97,
-      useNativeDriver: true,
-    }).start();
+  // State
+  const [modalVisible, setModalVisible] = useState(false);
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [isImportant, setIsImportant] = useState(false);
+  const [editAnnouncement, setEditAnnouncement] = useState<Announcement | null>(null)
 
-  const pressOut = () =>
-    Animated.spring(scale, {
-      toValue: 1,
-      friction: 4,
-      useNativeDriver: true,
-    }).start();
+  // Loading states
+  const [submitting, setSubmitting] = useState(false);
+  const [loadingList, setLoadingList] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  return (
-    <Animated.View
-      style={{ transform: [{ scale }], width: '48%', marginBottom: 20 }}
-    >
-      <TouchableOpacity
-        activeOpacity={0.85}
-        onPressIn={pressIn}
-        onPressOut={pressOut}
-        onPress={onPress}
-        style={[
-          styles.menuCard,
-          { backgroundColor: theme.surface, ...shadow },
-        ]}
-      >
-        <View style={[styles.iconContainer, { backgroundColor: color + '22' }]}> 
-          <IconLib name={icon} size={32} color={color} />
-        </View>
+  // Data
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.menuTitle, { color: theme.textPrimary }]}>
-            {title}
-          </Text>
-          <Text style={styles.menuSubtitle}>{subtitle}</Text>
-        </View>
+  // --- API HANDLERS ---
 
-        <Ionicons
-          name="chevron-forward"
-          size={18}
-          color={theme.textSecondary}
-          style={{ alignSelf: 'flex-end', opacity: 0.5, marginTop: 8 }}
-        />
-      </TouchableOpacity>
-    </Animated.View>
-  );
-};
+  const fetchAnnouncements = useCallback(async () => {
+    try {
+      const response = await api.getWithQuery<Announcement[]>(endpoints.announcements.list, { page: 1, limit: 20 });
+      if (response.success) {
+        setAnnouncements(response.data);
+      }
+    } catch (e) {
+      console.error("Fetch error", e);
+    } finally {
+      setLoadingList(false);
+      setRefreshing(false);
+    }
+  }, []);
 
-/* =========================================================
-   STAT ITEM
-========================================================= */
-const StatItem = ({ label, value, icon, color }: any) => {
-  const { theme } = useTheme();
-  return (
-    <View style={[styles.statCard, { backgroundColor: theme.surface, ...shadow }]}> 
+  useEffect(() => {
+    fetchAnnouncements();
+  }, [fetchAnnouncements]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchAnnouncements();
+  };
+
+  const handleSubmit = async () => {
+    if (!title.trim() || !content.trim()) {
+      Alert.alert('Form Belum Lengkap', 'Mohon isi judul dan konten pengumuman.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      // Kirim hanya field yang diperlukan
+      const payload: any = {
+        title,
+        content,
+        is_important: isImportant,
+        // attachments: [], // Hapus/comment jika tidak ada lampiran
+      };
+
+      const response = await api.post<Announcement>(endpoints.announcements.list, payload);
+      console.log('POST response:', response);
+      if (response.success) {
+        setModalVisible(false);
+        resetForm();
+        fetchAnnouncements();
+        Alert.alert('Berhasil', 'Pengumuman telah dipublikasikan.');
+      } else {
+        Alert.alert('Gagal', response.message || 'Gagal membuat pengumuman.');
+      }
+    } catch (e) {
+      console.log('API error:', e);
+      Alert.alert('Error', 'Terjadi kesalahan koneksi.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleEdit = (item: Announcement) => {
+    setEditAnnouncement(item)
+    setTitle(item.title)
+    setContent(item.content)
+    setIsImportant(!!item.is_important)
+    setModalVisible(true)
+  }
+
+  const handleDelete = async (id: string | number) => {
+    Alert.alert('Hapus Pengumuman', 'Yakin ingin menghapus pengumuman ini?', [
+      { text: 'Batal', style: 'cancel' },
+      {
+        text: 'Hapus', style: 'destructive', onPress: async () => {
+          try {
+            const response = await api.delete(`${endpoints.announcements.list}/${id}`)
+            if (response.success) {
+              fetchAnnouncements()
+              Alert.alert('Berhasil', 'Pengumuman dihapus.')
+            } else {
+              Alert.alert('Gagal', response.message || 'Gagal menghapus pengumuman.')
+            }
+          } catch (e) {
+            Alert.alert('Error', 'Terjadi kesalahan koneksi.')
+          }
+        }
+      }
+    ])
+  }
+
+  const handleUpdate = async () => {
+    if (!title.trim() || !content.trim()) {
+      Alert.alert('Form Belum Lengkap', 'Mohon isi judul dan konten pengumuman.')
+      return
+    }
+    setSubmitting(true)
+    try {
+      const payload: any = {
+        title,
+        content,
+        is_important: isImportant,
+      }
+      const response = await api.put(`${endpoints.announcements.list}/${editAnnouncement?.id}`, payload)
+      if (response.success) {
+        setModalVisible(false)
+        resetForm()
+        setEditAnnouncement(null)
+        fetchAnnouncements()
+        Alert.alert('Berhasil', 'Pengumuman berhasil diupdate.')
+      } else {
+        Alert.alert('Gagal', response.message || 'Gagal update pengumuman.')
+      }
+    } catch (e) {
+      Alert.alert('Error', 'Terjadi kesalahan koneksi.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const resetForm = () => {
+    setTitle('');
+    setContent('');
+    setIsImportant(false);
+  };
+
+  // --- RENDERERS ---
+
+  const renderHeader = () => (
+    <View style={styles.headerContainer}>
       <View>
-        <Text style={[styles.statValue, { color: theme.textPrimary }]}>
-          {value}
+        <Text variant="h2" style={{ color: theme.textPrimary, fontWeight: '800' }}>
+          Pengumuman
         </Text>
-        <Text style={[styles.statLabel, { color: theme.textSecondary }]}>
-          {label}
+        <Text style={{ color: theme.textSecondary, marginTop: 4 }}>
+          Kelola informasi untuk praktikan
         </Text>
       </View>
-      <View style={[styles.statIcon, { backgroundColor: color + '18' }]}> 
-        <Ionicons name={icon} size={22} color={color} />
-      </View>
+      <Button
+        size="sm"
+        variant="primary"
+        leftIcon={<Ionicons name="add" size={18} color={theme.textOnPrimary} />}
+        onPress={() => setModalVisible(true)}
+        style={{ borderRadius: 20, paddingHorizontal: 16 }}
+      >
+        Baru
+      </Button>
     </View>
   );
-};
 
-export default function AdminHomeScreen() {
-  const { theme } = useTheme();
-  const router = useRouter();
+  const renderItem = ({ item }: { item: Announcement }) => (
+    <Card style={StyleSheet.flatten([styles.card, { backgroundColor: theme.surface, borderColor: theme.border }])}>
+      <View style={styles.cardHeader}>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {item.is_important && (
+            <Badge variant="warning" size="sm">PENTING</Badge>
+          )}
+          <Text variant="caption" style={{ color: theme.textMuted }}>
+            Hari ini
+          </Text>
+        </View>
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <TouchableOpacity onPress={() => handleEdit(item)} hitSlop={10}>
+            <Ionicons name="create-outline" size={20} color={theme.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleDelete(item.id)} hitSlop={10}>
+            <Ionicons name="trash-outline" size={20} color={'#EF4444'} />
+          </TouchableOpacity>
+        </View>
+      </View>
+      <Text style={[styles.cardTitle, { color: theme.textPrimary }]}>{item.title}</Text>
+      <Text style={[styles.cardContent, { color: theme.textSecondary }]} numberOfLines={3}>
+        {item.content.replace(/<[^>]+>/g, '')}
+      </Text>
+      {item.attachments && item.attachments.length > 0 && (
+        <View style={[styles.cardFooter, { backgroundColor: theme.background }]}>
+          <Ionicons name="document-text-outline" size={16} color={theme.primary} />
+          <Text variant="caption" style={{ color: theme.primary, fontWeight: '600', marginLeft: 6 }}>
+            {item.attachments.length} Lampiran tersedia
+          </Text>
+        </View>
+      )}
+    </Card>
+  );
+
+  const renderEmpty = () => (
+    <View style={styles.emptyContainer}>
+      <View style={[styles.iconCircle, { backgroundColor: theme.border }]}>
+        <Ionicons name="megaphone-outline" size={40} color={theme.textMuted} />
+      </View>
+      <Text variant="h4" style={{ color: theme.textPrimary, marginTop: 16 }}>Belum ada pengumuman</Text>
+      <Text style={{ color: theme.textSecondary, textAlign: 'center', marginTop: 8, maxWidth: '80%' }}>
+        Tap tombol "Baru" di atas untuk membuat pengumuman pertama Anda.
+      </Text>
+    </View>
+  );
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.background }}>
-      {/* ================= HEADER ================= */}
-      <LinearGradient
-        colors={[theme.primary, theme.primary + 'E6']}
-        style={styles.header}
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }} edges={['top']}>
+      
+      {/* Main List */}
+      <FlatList
+        data={announcements}
+        keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
+        renderItem={renderItem}
+        contentContainerStyle={styles.listContent}
+        ListHeaderComponent={renderHeader}
+        ListEmptyComponent={!loadingList ? renderEmpty : null}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.primary]} />
+        }
+        ListFooterComponent={
+          loadingList && !refreshing ? (
+            <View style={{ padding: 20 }}>
+              <LoadingSpinner size="lg" color={theme.primary} />
+            </View>
+          ) : <View style={{ height: 20 }} />
+        }
+      />
+
+      {/* Modal Create */}
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => {
+          setModalVisible(false)
+          setEditAnnouncement(null)
+          resetForm()
+        }}
       >
-        <SafeAreaView edges={['top']}>
-          <View style={styles.headerTop}>
-            <View>
-              <Text style={styles.headerSubtitle}>
-                Selamat datang kembali, <Text style={{ fontWeight: 'bold', color: theme.accent || '#F59E0B' }}>Surya</Text>
-              </Text>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
+          <View style={[styles.modalContent, { backgroundColor: theme.surface }]}> 
+            <View style={styles.modalHeader}>
+              <Text variant="h3" style={{ color: theme.textPrimary }}>{editAnnouncement ? 'Edit Pengumuman' : 'Buat Pengumuman'}</Text>
+              <TouchableOpacity onPress={() => {
+                setModalVisible(false)
+                setEditAnnouncement(null)
+                resetForm()
+              }}>
+                <Ionicons name="close-circle" size={28} color={theme.textMuted} />
+              </TouchableOpacity>
             </View>
-
-            <TouchableOpacity style={styles.avatar}>
-              <Image
-                source={{ uri: 'https://i.pravatar.cc/150?img=12' }}
-                style={styles.avatarImg}
+            <View style={styles.formGroup}>
+              <Text style={{color: theme.textSecondary, marginBottom: 6, fontSize: 12, fontWeight: '600'}}>JUDUL</Text>
+              <TextInput
+                placeholder="Contoh: Perubahan Jadwal Praktikum"
+                placeholderTextColor={theme.textMuted}
+                value={title}
+                onChangeText={setTitle}
+                style={[styles.input, { borderColor: theme.border, color: theme.textPrimary, backgroundColor: theme.background }]}
               />
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.statsRow}
-          >
-            <StatItem
-              label="Mahasiswa"
-              value="120"
-              icon="people"
-              color="#3B82F6"
-            />
-            <StatItem
-              label="Modul Aktif"
-              value="8"
-              icon="flask"
-              color="#10B981"
-            />
-            <StatItem
-              label="Selesai"
-              value="15"
-              icon="checkmark-circle"
-              color="#F59E0B"
-            />
-            <StatItem
-              label="Admin Aktif"
-              value="2"
-              icon="person"
-              color="#7C3AED"
-            />
-          </ScrollView>
-        </SafeAreaView>
-      </LinearGradient>
-
-      {/* ================= MAIN ================= */}
-      <ScrollView contentContainerStyle={styles.main}>
-        <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Menu Utama</Text>
-
-        <View style={styles.menuGrid}>
-          <MenuCard
-            title="Pengumuman"
-            subtitle="Info & pemberitahuan"
-            icon="megaphone"
-            color="#EF4444"
-            onPress={() => router.push('/admin/announcement')}
-          />
-          <MenuCard
-            title="Modul Praktikum"
-            subtitle="Kelola modul"
-            icon="document-text"
-            color="#2563EB"
-            onPress={() => router.push('/admin/module')}
-          />
-          <MenuCard
-            title="Kelompok"
-            subtitle="Atur kelompok"
-            icon="people"
-            color="#7C3AED"
-            onPress={() => router.push('/admin/group')}
-          />
-          <MenuCard
-            title="Penilaian"
-            subtitle="Evaluasi hasil"
-            icon="clipboard-list-outline"
-            library="MaterialCommunityIcons"
-            color="#059669"
-            onPress={() => router.push('/admin/penilaian' as any)}
-          />
-        </View>
-
-        {/* Info Cards Section */}
-        <Text style={[styles.sectionTitle, { color: theme.textPrimary, marginTop: 24 }]}>Info Singkat</Text>
-        <View style={styles.infoRow}>
-          <View style={[styles.infoCard, { backgroundColor: '#EDE9FE', ...shadow }]}> 
-            <Ionicons name="calendar" size={28} color="#7C3AED" style={{ marginBottom: 8 }} />
-            <Text style={{ fontWeight: '700', fontSize: 15, color: '#7C3AED' }}>Jadwal Praktikum</Text>
-            <Text style={{ color: '#6B7280', fontSize: 12, marginTop: 2 }}>Senin & Rabu, 09:00 - 11:00</Text>
-          </View>
-          <View style={[styles.infoCard, { backgroundColor: '#FEF3C7', ...shadow }]}> 
-            <Ionicons name="trophy" size={28} color="#F59E0B" style={{ marginBottom: 8 }} />
-            <Text style={{ fontWeight: '700', fontSize: 15, color: '#F59E0B' }}>Top Group</Text>
-            <Text style={{ color: '#9CA3AF', fontSize: 12, marginTop: 2 }}>Kelompok 2 (95%)</Text>
-          </View>
-        </View>
-
-        {/* Recent Activity Section */}
-        <Text style={[styles.sectionTitle, { color: theme.textPrimary, marginTop: 24 }]}>Aktivitas Terbaru</Text>
-        <View style={[styles.activityCard, { backgroundColor: theme.surface, ...shadow }]}> 
-          <View style={styles.activityItem}>
-            <View style={[styles.dot, { backgroundColor: '#3B82F6' }]} />
-            <View>
-              <Text style={[styles.activityText, { color: theme.textPrimary }]}>Kelompok 3 mengumpulkan laporan</Text>
-              <Text style={styles.activityTime}>2 jam lalu</Text>
             </View>
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.activityItem}>
-            <View style={[styles.dot, { backgroundColor: '#10B981' }]} />
-            <View>
-              <Text style={[styles.activityText, { color: theme.textPrimary }]}>Modul 2 dipublikasikan</Text>
-              <Text style={styles.activityTime}>Hari ini, 09:00</Text>
+            <View style={styles.formGroup}>
+              <Text style={{color: theme.textSecondary, marginBottom: 6, fontSize: 12, fontWeight: '600'}}>ISI PENGUMUMAN</Text>
+              <TextInput
+                placeholder="Tulis informasi detail di sini..."
+                placeholderTextColor={theme.textMuted}
+                value={content}
+                onChangeText={setContent}
+                multiline
+                style={[styles.input, styles.textArea, { borderColor: theme.border, color: theme.textPrimary, backgroundColor: theme.background }]}
+              />
             </View>
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.activityItem}>
-            <View style={[styles.dot, { backgroundColor: '#F59E0B' }]} />
-            <View>
-              <Text style={[styles.activityText, { color: theme.textPrimary }]}>Penilaian modul 1 selesai</Text>
-              <Text style={styles.activityTime}>Kemarin, 16:30</Text>
+            <View style={[styles.switchContainer, { backgroundColor: theme.background, borderColor: theme.border }]}> 
+              <View style={{flex: 1}}>
+                <Text style={{ color: theme.textPrimary, fontWeight: '600' }}>Tandai Penting</Text>
+                <Text variant="caption" style={{ color: theme.textSecondary }}>Akan muncul highlight merah</Text>
+              </View>
+              <Switch 
+                value={isImportant} 
+                onValueChange={setIsImportant} 
+                trackColor={{ false: theme.border, true: theme.primary }}
+              />
             </View>
+            <Button 
+              variant="primary" 
+              size="lg"
+              onPress={editAnnouncement ? handleUpdate : handleSubmit} 
+              loading={submitting}
+              style={{ marginTop: 8 }}
+            >
+              {editAnnouncement ? 'Update Pengumuman' : 'Kirim Pengumuman'}
+            </Button>
           </View>
-        </View>
-      </ScrollView>
-    </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+    </SafeAreaView>
   );
 }
 
-/* =========================================================
-   STYLES
-========================================================= */
 const styles = StyleSheet.create({
-  header: {
-    height: 270,
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    paddingHorizontal: 24,
-    paddingTop: 0,
+  listContent: {
+    padding: 20,
+    paddingBottom: 40,
   },
-  headerTop: {
+  headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 24,
-    marginTop: 12,
+    marginTop: 8,
   },
-  // headerTitle removed
-  headerSubtitle: {
-    fontSize: 15,
-    color: 'rgba(255,255,255,0.92)',
-    marginTop: 4,
-    fontWeight: '500',
+  card: {
+    padding: 0, // Reset default padding Card component jika ada
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 16,
+    overflow: 'hidden',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#FFF',
-    ...shadow,
-  },
-  avatarImg: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 25,
-  },
-  statsRow: {
-    paddingBottom: 16,
-    paddingTop: 2,
-    paddingLeft: 2,
-  },
-  statCard: {
-    width: 140,
-    height: 90,
-    borderRadius: 18,
-    padding: 16,
-    marginRight: 14,
+  cardHeader: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#FFF',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    marginBottom: 8,
   },
-  statValue: {
-    fontSize: 22,
-    fontWeight: '800',
-    letterSpacing: 0.1,
-  },
-  statLabel: {
-    fontSize: 13,
-    fontWeight: '500',
-    marginTop: 2,
-  },
-  statIcon: {
-    alignSelf: 'flex-end',
-    padding: 9,
-    borderRadius: 12,
-  },
-  main: {
-    padding: 24,
-    paddingTop: 36,
-    paddingBottom: 50,
-  },
-  sectionTitle: {
+  cardTitle: {
     fontSize: 18,
     fontWeight: '700',
-    marginBottom: 16,
-    letterSpacing: 0.1,
-  },
-  menuGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    paddingHorizontal: 16,
     marginBottom: 8,
   },
-  menuCard: {
-    height: 155,
-    borderRadius: 22,
-    padding: 20,
-    justifyContent: 'space-between',
-    backgroundColor: '#FFF',
-    marginBottom: 0,
-  },
-  iconContainer: {
-    padding: 15,
-    borderRadius: 16,
-    marginBottom: 10,
-    alignSelf: 'flex-start',
-  },
-  menuTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  menuSubtitle: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    marginTop: 2,
-    fontWeight: '500',
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-    marginTop: 2,
-  },
-  infoCard: {
-    flex: 1,
-    borderRadius: 20,
-    padding: 18,
-    marginRight: 12,
-    alignItems: 'flex-start',
-    minWidth: 140,
-    maxWidth: 180,
-  },
-  activityCard: {
-    borderRadius: 18,
-    padding: 20,
-    marginTop: 4,
-    backgroundColor: '#FFF',
-  },
-  activityItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 2,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 12,
-    marginTop: 7,
-  },
-  activityText: {
+  cardContent: {
     fontSize: 14,
-    fontWeight: '600',
-    letterSpacing: 0.05,
+    lineHeight: 20,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
-  activityTime: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    marginTop: 2,
-    fontWeight: '500',
+  cardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    paddingHorizontal: 16,
   },
-  divider: {
-    height: 1,
-    backgroundColor: '#E5E7EB',
-    marginVertical: 14,
-    marginLeft: 20,
+  // Empty State Styles
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 60,
+  },
+  iconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    opacity: 0.5,
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+    elevation: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  formGroup: {
+    marginBottom: 16,
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+  },
+  textArea: {
+    minHeight: 120,
+    textAlignVertical: 'top',
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 24,
   },
 });

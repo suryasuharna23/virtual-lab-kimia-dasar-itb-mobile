@@ -14,19 +14,17 @@ import {
 import * as DocumentPicker from 'expo-document-picker'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { useRouter } from 'expo-router'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { useTheme } from '@/contexts/ThemeContext'
 import { Text, Card, Button, LoadingSpinner, Badge } from '@/components/ui'
 import { api } from '@/lib/api'
 import { endpoints, API_BASE_URL } from '@/constants/api'
-import { downloadModule, shareFile } from '@/lib/download'
+import { downloadModule } from '@/lib/download'
 import { colors, spacing, borderRadius } from '@/constants/theme'
 import type { Module } from '@/types'
 
 export default function AdminModuleScreen() {
   const { theme } = useTheme()
-  const router = useRouter()
   const [modules, setModules] = useState<Module[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)

@@ -43,15 +43,6 @@ export default function AdminTabLayout() {
         options={{
           headerShown: false,
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="grid" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="announcement"
-        options={{
-          headerShown: false,
-          tabBarIcon: ({ color, size }) => (
             <Ionicons name="megaphone" size={size} color={color} />
           ),
         }}
