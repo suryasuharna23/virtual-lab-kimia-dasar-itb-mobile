@@ -376,7 +376,7 @@ export default function AdminGroupScreen() {
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>NAMA KELOMPOK</Text>
+              <Text style={{ color: theme.textSecondary, marginBottom: 6, fontSize: 12, fontWeight: '600' }}>NAMA KELOMPOK</Text>
               <TextInput
                 placeholder="Contoh: Kelompok 1 - Senin Pagi"
                 placeholderTextColor={theme.textMuted}
@@ -390,7 +390,7 @@ export default function AdminGroupScreen() {
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>DESKRIPSI</Text>
+              <Text style={{ color: theme.textSecondary, marginBottom: 6, fontSize: 12, fontWeight: '600' }}>DESKRIPSI</Text>
               <TextInput
                 placeholder="Deskripsi singkat..."
                 placeholderTextColor={theme.textMuted}
@@ -406,7 +406,7 @@ export default function AdminGroupScreen() {
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>COHORT / ANGKATAN</Text>
+              <Text style={{ color: theme.textSecondary, marginBottom: 6, fontSize: 12, fontWeight: '600' }}>COHORT / ANGKATAN</Text>
               <TextInput
                 placeholder="Contoh: 2024/2025"
                 placeholderTextColor={theme.textMuted}
@@ -420,7 +420,7 @@ export default function AdminGroupScreen() {
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>VISIBILITAS</Text>
+              <Text style={{ color: theme.textSecondary, marginBottom: 6, fontSize: 12, fontWeight: '600' }}>VISIBILITAS</Text>
               <View style={{ flexDirection: 'row', gap: 12 }}>
                 <TouchableOpacity
                   onPress={() => setVisibility('public')}
@@ -474,7 +474,7 @@ export default function AdminGroupScreen() {
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>FILE PDF</Text>
+              <Text style={{ color: theme.textSecondary, marginBottom: 6, fontSize: 12, fontWeight: '600' }}>FILE PDF</Text>
               <Button variant="secondary" onPress={pickFile} style={{ marginBottom: 0 }}>
                 {file && 'assets' in file && file.assets && file.assets.length > 0
                   ? `📄 ${file.assets[0].name}`
@@ -506,7 +506,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 100,
   },
   headerContainer: {
     flexDirection: 'row',
@@ -581,12 +581,6 @@ const styles = StyleSheet.create({
   },
   formGroup: {
     marginBottom: 16,
-  },
-  label: {
-    color: '#6B7280',
-    marginBottom: 6,
-    fontSize: 12,
-    fontWeight: '600',
   },
   input: {
     borderWidth: 1,

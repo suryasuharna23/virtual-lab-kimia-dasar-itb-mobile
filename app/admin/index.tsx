@@ -10,7 +10,6 @@ import {
   RefreshControl,
   KeyboardAvoidingView,
   Platform,
-  Dimensions,
   TouchableOpacity
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -200,7 +199,7 @@ export default function AdminAnnouncementScreen() {
             <Badge variant="warning" size="sm">PENTING</Badge>
           )}
           <Text variant="caption" style={{ color: theme.textMuted }}>
-            Hari ini
+            {formatDate(item.published_at)}
           </Text>
         </View>
         <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -340,7 +339,7 @@ export default function AdminAnnouncementScreen() {
 const styles = StyleSheet.create({
   listContent: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 100,
   },
   headerContainer: {
     flexDirection: 'row',

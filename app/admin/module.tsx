@@ -231,6 +231,19 @@ export default function AdminModuleScreen() {
     </View>
   )
 
+  const renderError = () => {
+    if (!error) return null
+    return (
+      <View style={[styles.errorBanner, { backgroundColor: theme.errorSoft }]}>
+        <Ionicons name="warning-outline" size={20} color={colors.error} />
+        <Text style={{ color: colors.error, flex: 1, marginLeft: 8 }}>{error}</Text>
+        <TouchableOpacity onPress={onRefresh}>
+          <Ionicons name="refresh" size={20} color={colors.error} />
+        </TouchableOpacity>
+      </View>
+    )
+  }
+
   const renderItem = ({ item, index }: { item: Module; index: number }) => {
     const isDownloading = downloadingId === item.id
 
@@ -339,7 +352,7 @@ export default function AdminModuleScreen() {
         keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}
         contentContainerStyle={styles.listContent}
-        ListHeaderComponent={renderHeader}
+        ListHeaderComponent={<>{renderHeader()}{renderError()}</>}
         ListEmptyComponent={renderEmpty}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.primary]} />
@@ -363,7 +376,7 @@ export default function AdminModuleScreen() {
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>JUDUL</Text>
+              <Text style={{ color: theme.textSecondary, marginBottom: 6, fontSize: 12, fontWeight: '600' }}>JUDUL</Text>
               <TextInput
                 placeholder="Contoh: Modul 1 - Pengenalan Lab"
                 placeholderTextColor={theme.textMuted}
@@ -377,7 +390,7 @@ export default function AdminModuleScreen() {
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>DESKRIPSI</Text>
+              <Text style={{ color: theme.textSecondary, marginBottom: 6, fontSize: 12, fontWeight: '600' }}>DESKRIPSI</Text>
               <TextInput
                 placeholder="Deskripsi singkat modul..."
                 placeholderTextColor={theme.textMuted}
@@ -393,7 +406,7 @@ export default function AdminModuleScreen() {
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>VISIBILITAS</Text>
+              <Text style={{ color: theme.textSecondary, marginBottom: 6, fontSize: 12, fontWeight: '600' }}>VISIBILITAS</Text>
               <View style={{ flexDirection: 'row', gap: 12 }}>
                 <TouchableOpacity
                   onPress={() => setVisibility('public')}
@@ -448,7 +461,7 @@ export default function AdminModuleScreen() {
 
             {!editId && (
               <View style={styles.formGroup}>
-                <Text style={styles.label}>FILE PDF</Text>
+                <Text style={{ color: theme.textSecondary, marginBottom: 6, fontSize: 12, fontWeight: '600' }}>FILE PDF</Text>
                 <Button variant="secondary" onPress={pickFile} style={{ marginBottom: 0 }}>
                   {file && 'assets' in file && file.assets && file.assets.length > 0
                     ? `📄 ${file.assets[0].name}`
@@ -481,7 +494,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 100,
   },
   headerContainer: {
     flexDirection: 'row',
@@ -489,6 +502,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 24,
     marginTop: 8,
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: borderRadius.md,
+    marginBottom: 16,
   },
   card: {
     marginBottom: 12,
@@ -555,12 +575,6 @@ const styles = StyleSheet.create({
   },
   formGroup: {
     marginBottom: 16,
-  },
-  label: {
-    color: '#6B7280',
-    marginBottom: 6,
-    fontSize: 12,
-    fontWeight: '600',
   },
   input: {
     borderWidth: 1,

@@ -73,7 +73,9 @@ function RootLayoutContent() {
           }}
         >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="admin" options={{ headerShown: false }} />
           <Stack.Screen name="auth" options={{ headerShown: false }} />
+          <Stack.Screen name="auth-selection" options={{ headerShown: false }} />
           <Stack.Screen name="nametag" options={{ headerShown: false }} />
           <Stack.Screen name="pengumuman/[id]" options={{ headerShown: false }} />
           <Stack.Screen name="profile" options={{ headerShown: false }} />
