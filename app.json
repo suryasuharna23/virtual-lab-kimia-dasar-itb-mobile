@@ -1,15 +1,17 @@
 {
   "expo": {
-    "name": "virtual-lab-kimia-dasar-mobile",
-    "slug": "virtual-lab-kimia-dasar-mobile",
+    "name": "Lab Kimia Dasar ITB",
+    "slug": "lab-kimia-dasar-itb",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "virtuallabkimiadasarmobile",
+    "icon": "./assets/images/app-logo.png",
+    "scheme": "labkimidasaritb",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.arqilasp.labkimidasaritb",
+      "icon": "./assets/images/itb-logo.png"
     },
     "android": {
       "adaptiveIcon": {
@@ -19,7 +21,14 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ],
+      "package": "com.arqilasp.labkimidasaritb"
     },
     "web": {
       "output": "static",
@@ -47,7 +56,7 @@
       "reactCompiler": true
     },
     "extra": {
-      "apiUrl": "http://192.168.1.13:5001"
+      "apiUrl": "https://backend-labkidas-rn.vercel.app"
     }
   }
 }
