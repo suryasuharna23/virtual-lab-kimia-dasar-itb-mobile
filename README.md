@@ -19,12 +19,6 @@ Aplikasi **Lab Kimia Dasar ITB** dirancang untuk mendigitalkan pengalaman prakti
 9.  **❓ FAQ & Kontak** - Pusat informasi bantuan dan saluran komunikasi dengan pengelola lab.
 10. **📄 PDF Viewer** - Fitur pembaca dokumen PDF terintegrasi untuk kenyamanan membaca modul di perangkat mobile.
 
-## 🖼 Screenshots
-
-*(Bagian ini adalah placeholder untuk dokumentasi visual aplikasi)*
-
----
-
 ## 📥 Instalasi
 
 ### A. Download Build (Cara Tercepat)
