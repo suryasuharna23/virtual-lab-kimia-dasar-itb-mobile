@@ -28,13 +28,17 @@ Aplikasi **Lab Kimia Dasar ITB** dirancang untuk mendigitalkan pengalaman prakti
 ## 📥 Instalasi
 
 ### A. Download Build (Cara Tercepat)
-File instalasi siap pakai tersedia di dalam folder `builds/`:
-- **iOS**: `LabKimiaDasarITB.ipa` (12 MB)
-- **Android**: `LabKimiaDasarITB.apk` (91 MB)
 
-*Build terakhir: 3 Januari 2026*
+[![GitHub Release](https://img.shields.io/github/v/release/suryasuharna23/virtual-lab-kimia-dasar-itb-mobile?style=for-the-badge)](https://github.com/suryasuharna23/virtual-lab-kimia-dasar-itb-mobile/releases/latest)
 
-> **📝 Catatan**: File build (`.apk` dan `.ipa`) tidak di-commit ke Git karena ukurannya besar. Jika folder `builds/` kosong, build ulang dari source atau minta file dari maintainer.
+Download dari [**GitHub Releases**](https://github.com/suryasuharna23/virtual-lab-kimia-dasar-itb-mobile/releases/latest):
+
+| Platform | File | Size | Link |
+|----------|------|------|------|
+| **Android** | `LabKimiaDasarITB.apk` | 91 MB | [⬇️ Download](https://github.com/suryasuharna23/virtual-lab-kimia-dasar-itb-mobile/releases/download/v1.0.0/LabKimiaDasarITB.apk) |
+| **iOS** | `LabKimiaDasarITB.ipa` | 12 MB | [⬇️ Download](https://github.com/suryasuharna23/virtual-lab-kimia-dasar-itb-mobile/releases/download/v1.0.0/LabKimiaDasarITB.ipa) |
+
+*Build terakhir: 3 Januari 2026 (v1.0.0)*
 
 ### B. Install di iOS
 Metode instalasi untuk perangkat iOS:
