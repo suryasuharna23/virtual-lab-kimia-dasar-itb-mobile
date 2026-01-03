@@ -19,6 +19,9 @@ import { spacing, layout, borderRadius, colors } from '@/constants/theme'
 import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated'
 
 export default function LoginScreen() {
+    const handleBack = () => {
+      router.replace('/auth-selection')
+    }
   const router = useRouter()
   const { theme } = useTheme()
   const { login } = useAuth()
@@ -42,7 +45,7 @@ export default function LoginScreen() {
     }
 
     if (!password) {
-      newErrors.password = 'Password wajib diisi'
+      newErrors.password = 'Kata sandi wajib diisi'
       isValid = false
     }
 
@@ -55,12 +58,12 @@ export default function LoginScreen() {
 
     setLoading(true)
     try {
-      await login({ email, password }, true) // true for student login
+      await login({ email, password }, true) // true untuk login mahasiswa
       router.replace('/(tabs)')
     } catch (error: any) {
       Alert.alert(
         'Login Gagal',
-        error.message || 'Terjadi kesalahan saat login. Periksa kembali email dan password Anda.'
+        error.message || 'Terjadi kesalahan saat login. Periksa kembali email dan kata sandi Anda.'
       )
     } finally {
       setLoading(false)
@@ -72,7 +75,7 @@ export default function LoginScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}> 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -82,29 +85,33 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Tombol Kembali */}
+          <TouchableOpacity onPress={handleBack} style={{ position: 'absolute', top: 0, left: 0, zIndex: 10, padding: 8 }}>
+            <Ionicons name="arrow-back" size={28} color={theme.textPrimary} />
+          </TouchableOpacity>
           {/* Header Illustration / Icons */}
           <Animated.View entering={FadeInUp.delay(200).springify()} style={styles.header}>
              <View style={styles.floatingIconContainer}>
-                <View style={[styles.floatingIcon, { backgroundColor: colors.infoSoft, transform: [{ rotate: '-10deg' }] }]}>
+                <View style={[styles.floatingIcon, { backgroundColor: colors.infoSoft, transform: [{ rotate: '-10deg' }] }]}> 
                     <Ionicons name="flask" size={32} color={colors.info} />
                 </View>
-                <View style={[styles.floatingIcon, { backgroundColor: colors.warningSoft, marginTop: 40, transform: [{ rotate: '10deg' }] }]}>
+                <View style={[styles.floatingIcon, { backgroundColor: colors.warningSoft, marginTop: 40, transform: [{ rotate: '10deg' }] }]}> 
                     <Ionicons name="book" size={32} color={colors.warning} />
                 </View>
              </View>
              
             <Text variant="h1" weight="bold" style={{ color: theme.textPrimary, textAlign: 'center', marginBottom: spacing.sm }}>
-              Keep going your learn now
+              Login Mahasiswa
             </Text>
             <Text variant="body" style={{ color: theme.textSecondary, textAlign: 'center', maxWidth: '80%' }}>
-              Log in to access your virtual lab and continue your progress
+              Masuk ke akun praktikan untuk mengakses virtual lab, modul, dan fitur praktikum lainnya.
             </Text>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(400).springify()} style={{ width: '100%' }}>
             <Card style={styles.formCard}>
                 <Input
-                label="Email"
+                label="Email Mahasiswa"
                 placeholder="nama@mahasiswa.itb.ac.id"
                 value={email}
                 onChangeText={(text) => {
@@ -119,8 +126,8 @@ export default function LoginScreen() {
 
                 <View style={{ marginTop: spacing.md }}>
                 <Input
-                    label="Password"
-                    placeholder="Masukkan password"
+                    label="Kata Sandi"
+                    placeholder="Masukkan kata sandi"
                     value={password}
                     onChangeText={(text) => {
                     setPassword(text)
@@ -149,17 +156,17 @@ export default function LoginScreen() {
                     size="lg"
                     variant="primary"
                 >
-                    Sign In
+                    Masuk
                 </Button>
                 </View>
 
                 <View style={styles.footer}>
                 <Text variant="bodySmall" style={{ color: theme.textSecondary }}>
-                    Haven't an Account?{' '}
+                    Belum punya akun?{' '}
                 </Text>
                 <TouchableOpacity onPress={navigateToRegister}>
                     <Text variant="bodySmall" weight="bold" style={{ color: theme.primary }}>
-                    Sign Up
+                    Daftar
                     </Text>
                 </TouchableOpacity>
                 </View>

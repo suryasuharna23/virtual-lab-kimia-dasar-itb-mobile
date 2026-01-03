@@ -87,7 +87,7 @@ export default function LoginAdminScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Tombol Back */}
+          {/* Tombol Kembali */}
           <TouchableOpacity onPress={handleBack} style={{ position: 'absolute', top: 0, left: 0, zIndex: 10, padding: 8 }}>
             <Ionicons name="arrow-back" size={28} color={theme.textPrimary} />
           </TouchableOpacity>
