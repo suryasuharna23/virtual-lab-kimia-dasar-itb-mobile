@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   View, 
   StyleSheet, 
@@ -11,15 +11,24 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
-  ScrollView // Ditambahkan
+  ScrollView,
+  LayoutAnimation,
+  UIManager
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Text, Card, Button, LoadingSpinner, Badge } from '@/components/ui';
 import { api } from '@/lib/api';
 import { endpoints } from '@/constants/api';
+import { colors, spacing, borderRadius } from '@/constants/theme';
 import type { Announcement } from '@/types';
+
+// Enable LayoutAnimation
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 // Helper format tanggal
 const formatDate = (dateString?: string) => {
@@ -46,43 +55,22 @@ export default function AdminAnnouncementScreen() {
   // --- STATE DATA ---
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
-  // --- STATE FILTER, SORT, SEARCH (BARU) ---
+  // --- STATE FILTER & SEARCH ---
   const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'important'>('all');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc'); 
 
-  // --- EFFECT DEBOUNCE SEARCH ---
-  // Mencegah spam request API saat mengetik
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-    }, 500); // Delay 500ms
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
   // --- API HANDLERS ---
-
   const fetchAnnouncements = useCallback(async () => {
     try {
-      const queryParams: any = { 
+      // Fetch data lebih banyak untuk mendukung client-side filtering yang mulus
+      const response = await api.getWithQuery<Announcement[]>(endpoints.announcements.list, { 
         page: 1, 
-        limit: 20,
-        search: debouncedSearch // keyword pencarian
-      };
-      if (filterType === 'important') {
-        queryParams.is_important = true;
-      }
-      // Always fetch without sort, sort client-side for full control
-      const response = await api.getWithQuery<Announcement[]>(endpoints.announcements.list, queryParams);
+        limit: 100 
+      });
+      
       if (response.success) {
-        let sorted = [...response.data];
-        sorted.sort((a, b) => {
-          const dateA = new Date(a.published_at || a.created_at || 0).getTime();
-          const dateB = new Date(b.published_at || b.created_at || 0).getTime();
-          return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
-        });
-        setAnnouncements(sorted);
+        setAnnouncements(response.data);
       }
     } catch (e) {
       console.error("Fetch error", e);
@@ -90,18 +78,46 @@ export default function AdminAnnouncementScreen() {
       setLoadingList(false);
       setRefreshing(false);
     }
-  }, [debouncedSearch, filterType, sortOrder]);
+  }, []);
 
-  // Panggil fetch awal dan setiap kali filter berubah
   useEffect(() => {
     fetchAnnouncements();
   }, [fetchAnnouncements]);
+
+  // --- LOGIC FILTERING & SORTING (Client Side) ---
+  const processedAnnouncements = useMemo(() => {
+    let result = [...announcements];
+
+    // 1. Search
+    if (searchQuery) {
+      const lowerQuery = searchQuery.toLowerCase();
+      result = result.filter(item => 
+        item.title.toLowerCase().includes(lowerQuery) || 
+        item.content.toLowerCase().includes(lowerQuery)
+      );
+    }
+
+    // 2. Filter Type
+    if (filterType === 'important') {
+      result = result.filter(item => item.is_important);
+    }
+
+    // 3. Sorting
+    result.sort((a, b) => {
+      const dateA = new Date(a.published_at || a.created_at || 0).getTime();
+      const dateB = new Date(b.published_at || b.created_at || 0).getTime();
+      return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+    });
+
+    return result;
+  }, [announcements, searchQuery, filterType, sortOrder]);
 
   const onRefresh = () => {
     setRefreshing(true);
     fetchAnnouncements();
   };
 
+  // --- CRUD ACTIONS ---
   const handleSubmit = async () => {
     if (!title.trim() || !content.trim()) {
       Alert.alert('Form Belum Lengkap', 'Mohon isi judul dan konten pengumuman.');
@@ -129,35 +145,6 @@ export default function AdminAnnouncementScreen() {
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const handleEdit = (item: Announcement) => {
-    setEditAnnouncement(item);
-    setTitle(item.title);
-    setContent(item.content);
-    setIsImportant(!!item.is_important);
-    setModalVisible(true);
-  };
-
-  const handleDelete = async (id: string | number) => {
-    Alert.alert('Hapus Pengumuman', 'Yakin ingin menghapus pengumuman ini?', [
-      { text: 'Batal', style: 'cancel' },
-      {
-        text: 'Hapus', style: 'destructive', onPress: async () => {
-          try {
-            const response = await api.delete(`${endpoints.announcements.list}/${id}`);
-            if (response.success) {
-              fetchAnnouncements();
-              Alert.alert('Berhasil', 'Pengumuman dihapus.');
-            } else {
-              Alert.alert('Gagal', response.message || 'Gagal menghapus pengumuman.');
-            }
-          } catch (e) {
-            Alert.alert('Error', 'Terjadi kesalahan koneksi.');
-          }
-        }
-      }
-    ]);
   };
 
   const handleUpdate = async () => {
@@ -189,6 +176,41 @@ export default function AdminAnnouncementScreen() {
     }
   };
 
+  const handleDelete = async (id: string | number) => {
+    Alert.alert('Hapus Pengumuman', 'Yakin ingin menghapus pengumuman ini?', [
+      { text: 'Batal', style: 'cancel' },
+      {
+        text: 'Hapus', style: 'destructive', onPress: async () => {
+          try {
+            const response = await api.delete(`${endpoints.announcements.list}/${id}`);
+            if (response.success) {
+              fetchAnnouncements();
+            } else {
+              Alert.alert('Gagal', response.message || 'Gagal menghapus pengumuman.');
+            }
+          } catch (e) {
+            Alert.alert('Error', 'Terjadi kesalahan koneksi.');
+          }
+        }
+      }
+    ]);
+  };
+
+  // --- UI ACTIONS ---
+  const openCreate = () => {
+    setEditAnnouncement(null);
+    resetForm();
+    setModalVisible(true);
+  }
+
+  const openEdit = (item: Announcement) => {
+    setEditAnnouncement(item);
+    setTitle(item.title);
+    setContent(item.content);
+    setIsImportant(!!item.is_important);
+    setModalVisible(true);
+  };
+
   const resetForm = () => {
     setTitle('');
     setContent('');
@@ -204,7 +226,7 @@ export default function AdminAnnouncementScreen() {
       padding: 20,
       flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: 16, // Dikurangi agar tidak terlalu jauh dari search bar
+      marginBottom: 16,
       marginTop: 8,
       shadowColor: theme.primary,
       shadowOffset: { width: 0, height: 2 },
@@ -229,7 +251,7 @@ export default function AdminAnnouncementScreen() {
             Pengumuman
           </Text>
           <Text style={{ color: theme.textSecondary, marginTop: 2, fontSize: 12, fontWeight: '500' }}>
-            Kelola informasi untuk praktikan
+            Kelola informasi praktikan
           </Text>
         </View>
       </View>
@@ -237,7 +259,7 @@ export default function AdminAnnouncementScreen() {
         size="sm"
         variant="primary"
         leftIcon={<Ionicons name="add" size={18} color={theme.textOnPrimary} />}
-        onPress={() => setModalVisible(true)}
+        onPress={openCreate}
         style={{ borderRadius: 20, minWidth: 80, marginLeft: 12, paddingHorizontal: 0 }}
       >
         Baru
@@ -245,7 +267,6 @@ export default function AdminAnnouncementScreen() {
     </View>
   );
 
-  // --- RENDER SEARCH & FILTER (BARU) ---
   const renderSearchAndFilter = () => (
     <View style={{ marginBottom: 16 }}>
       {/* Search Input */}
@@ -255,7 +276,10 @@ export default function AdminAnnouncementScreen() {
           placeholder="Cari judul/konten..."
           placeholderTextColor={theme.textMuted}
           value={searchQuery}
-          onChangeText={setSearchQuery}
+          onChangeText={(text) => {
+            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+            setSearchQuery(text);
+          }}
           style={[styles.searchInput, { color: theme.textPrimary }]}
         />
         {searchQuery.length > 0 && (
@@ -266,13 +290,19 @@ export default function AdminAnnouncementScreen() {
       </View>
 
       {/* Filter Chips & Sort */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 4 }}>
         {/* Filter: Semua */}
         <TouchableOpacity
-          onPress={() => setFilterType('all')}
+          onPress={() => {
+            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+            setFilterType('all');
+          }}
           style={[
             styles.chip, 
-            { backgroundColor: filterType === 'all' ? theme.primary : theme.surface, borderColor: theme.border }
+            { 
+              backgroundColor: filterType === 'all' ? theme.primary : theme.surface, 
+              borderColor: filterType === 'all' ? theme.primary : theme.border 
+            }
           ]}
         >
           <Text style={{ color: filterType === 'all' ? theme.textOnPrimary : theme.textSecondary, fontSize: 13, fontWeight: '600' }}>
@@ -282,10 +312,16 @@ export default function AdminAnnouncementScreen() {
 
         {/* Filter: Penting */}
         <TouchableOpacity
-          onPress={() => setFilterType('important')}
+          onPress={() => {
+            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+            setFilterType('important');
+          }}
           style={[
             styles.chip, 
-            { backgroundColor: filterType === 'important' ? theme.primary : theme.surface, borderColor: theme.border }
+            { 
+              backgroundColor: filterType === 'important' ? theme.primary : theme.surface, 
+              borderColor: filterType === 'important' ? theme.primary : theme.border 
+            }
           ]}
         >
           <Text style={{ color: filterType === 'important' ? theme.textOnPrimary : theme.textSecondary, fontSize: 13, fontWeight: '600' }}>
@@ -298,7 +334,10 @@ export default function AdminAnnouncementScreen() {
 
         {/* Sort Toggle */}
         <TouchableOpacity
-          onPress={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
+          onPress={() => {
+            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+            setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc');
+          }}
           style={[styles.chip, { backgroundColor: theme.surface, borderColor: theme.border, flexDirection: 'row', alignItems: 'center' }]}
         >
           <Ionicons 
@@ -315,39 +354,72 @@ export default function AdminAnnouncementScreen() {
     </View>
   );
 
-  const renderItem = ({ item }: { item: Announcement }) => (
-    <Card style={StyleSheet.flatten([styles.card, { backgroundColor: theme.surface, borderColor: theme.border }])}>
-      <View style={styles.cardHeader}>
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          {item.is_important && (
-            <Badge variant="warning" size="sm">PENTING</Badge>
-          )}
-          <Text variant="caption" style={{ color: theme.textMuted }}>
-            {formatDate(item.published_at)}
-          </Text>
+  const renderItem = ({ item, index }: { item: Announcement; index: number }) => (
+    <Animated.View entering={FadeInDown.delay(index * 30).springify()}>
+      <Card style={StyleSheet.flatten([styles.card, { backgroundColor: theme.surface, borderColor: theme.border }])}>
+        <View style={styles.cardContent}>
+           {/* Icon */}
+           <View style={[styles.iconContainer, { backgroundColor: theme.primary + '10' }]}>
+              <Ionicons name="megaphone" size={24} color={theme.primary} />
+            </View>
+
+            <View style={styles.contentInfo}>
+              <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start'}}>
+                <Text
+                  variant="bodyLarge"
+                  style={{ color: theme.textPrimary, fontWeight: '700', flex: 1, marginRight: 8 }}
+                  numberOfLines={1}
+                >
+                  {item.title}
+                </Text>
+                
+                {item.is_important && (
+                   <View style={{backgroundColor: colors.warning + '20', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4}}>
+                      <Text style={{fontSize: 10, color: colors.warning, fontWeight: '700'}}>PENTING</Text>
+                   </View>
+                )}
+              </View>
+
+              <Text variant="caption" style={{ color: theme.textMuted, marginTop: 2 }}>
+                {formatDate(item.published_at)}
+              </Text>
+
+              <Text style={{color: theme.textSecondary, fontSize: 13, marginTop: 6, lineHeight: 18}} numberOfLines={2}>
+                 {item.content.replace(/<[^>]+>/g, '')}
+              </Text>
+
+              {item.attachments && item.attachments.length > 0 && (
+                 <View style={{flexDirection: 'row', alignItems: 'center', marginTop: 8}}>
+                    <Ionicons name="attach" size={14} color={theme.primary} />
+                    <Text style={{fontSize: 11, color: theme.primary, fontWeight: '600', marginLeft: 4}}>
+                      {item.attachments.length} Lampiran
+                    </Text>
+                 </View>
+              )}
+            </View>
         </View>
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <TouchableOpacity onPress={() => handleEdit(item)} hitSlop={10}>
-            <Ionicons name="create-outline" size={20} color={theme.primary} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleDelete(item.id)} hitSlop={10}>
-            <Ionicons name="trash-outline" size={20} color={'#EF4444'} />
-          </TouchableOpacity>
+
+        {/* Action Bar - Clean Separated */}
+        <View style={[styles.cardActions, { borderTopColor: theme.border }]}>
+             <TouchableOpacity 
+               onPress={() => openEdit(item)} 
+               style={{flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10}}
+             >
+                <Ionicons name="create-outline" size={18} color={theme.textSecondary} />
+                <Text style={{marginLeft: 6, fontSize: 13, fontWeight: '600', color: theme.textSecondary}}>Edit</Text>
+             </TouchableOpacity>
+             
+             <View style={{width: 1, height: '60%', backgroundColor: theme.border}} />
+
+             <TouchableOpacity 
+               onPress={() => handleDelete(item.id)} 
+               style={{flex: 0.8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10}}
+             >
+                <Ionicons name="trash-outline" size={18} color={colors.error} />
+             </TouchableOpacity>
         </View>
-      </View>
-      <Text style={[styles.cardTitle, { color: theme.textPrimary }]}>{item.title}</Text>
-      <Text style={[styles.cardContent, { color: theme.textSecondary }]} numberOfLines={3}>
-        {item.content.replace(/<[^>]+>/g, '')}
-      </Text>
-      {item.attachments && item.attachments.length > 0 && (
-        <View style={[styles.cardFooter, { backgroundColor: theme.background }]}>
-          <Ionicons name="document-text-outline" size={16} color={theme.primary} />
-          <Text variant="caption" style={{ color: theme.primary, fontWeight: '600', marginLeft: 6 }}>
-            {item.attachments.length} Lampiran tersedia
-          </Text>
-        </View>
-      )}
-    </Card>
+      </Card>
+    </Animated.View>
   );
 
   const renderEmpty = () => (
@@ -367,30 +439,21 @@ export default function AdminAnnouncementScreen() {
       
       {/* Main List */}
       <FlatList
-        data={announcements}
+        data={processedAnnouncements}
         keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
         renderItem={renderItem}
         contentContainerStyle={styles.listContent}
-        
-        // Header Gabungan (Judul + Search/Filter)
         ListHeaderComponent={
           <View>
             {renderHeader()}
             {renderSearchAndFilter()}
           </View>
         }
-        
         ListEmptyComponent={!loadingList ? renderEmpty : null}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.primary]} />
         }
-        ListFooterComponent={
-          loadingList && !refreshing ? (
-            <View style={{ padding: 20 }}>
-              <LoadingSpinner size="lg" color={theme.primary} />
-            </View>
-          ) : <View style={{ height: 20 }} />
-        }
+        showsVerticalScrollIndicator={false}
       />
 
       {/* Modal Create/Edit */}
@@ -419,47 +482,54 @@ export default function AdminAnnouncementScreen() {
                 <Ionicons name="close-circle" size={28} color={theme.textMuted} />
               </TouchableOpacity>
             </View>
-            <View style={styles.formGroup}>
-              <Text style={{color: theme.textSecondary, marginBottom: 6, fontSize: 12, fontWeight: '600'}}>JUDUL</Text>
-              <TextInput
-                placeholder="Contoh: Perubahan Jadwal Praktikum"
-                placeholderTextColor={theme.textMuted}
-                value={title}
-                onChangeText={setTitle}
-                style={[styles.input, { borderColor: theme.border, color: theme.textPrimary, backgroundColor: theme.background }]}
-              />
-            </View>
-            <View style={styles.formGroup}>
-              <Text style={{color: theme.textSecondary, marginBottom: 6, fontSize: 12, fontWeight: '600'}}>ISI PENGUMUMAN</Text>
-              <TextInput
-                placeholder="Tulis informasi detail di sini..."
-                placeholderTextColor={theme.textMuted}
-                value={content}
-                onChangeText={setContent}
-                multiline
-                style={[styles.input, styles.textArea, { borderColor: theme.border, color: theme.textPrimary, backgroundColor: theme.background }]}
-              />
-            </View>
-            <View style={[styles.switchContainer, { backgroundColor: theme.background, borderColor: theme.border }]}> 
-              <View style={{flex: 1}}>
-                <Text style={{ color: theme.textPrimary, fontWeight: '600' }}>Tandai Penting</Text>
-                <Text variant="caption" style={{ color: theme.textSecondary }}>Akan muncul highlight merah</Text>
-              </View>
-              <Switch 
-                value={isImportant} 
-                onValueChange={setIsImportant} 
-                trackColor={{ false: theme.border, true: theme.primary }}
-              />
-            </View>
-            <Button 
-              variant="primary" 
-              size="lg"
-              onPress={editAnnouncement ? handleUpdate : handleSubmit} 
-              loading={submitting}
-              style={{ marginTop: 8 }}
+
+            {/* Form Content Scrollable */}
+            <ScrollView 
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 20 }}
             >
-              {editAnnouncement ? 'Update Pengumuman' : 'Kirim Pengumuman'}
-            </Button>
+              <View style={styles.formGroup}>
+                <Text style={{color: theme.textSecondary, marginBottom: 6, fontSize: 12, fontWeight: '600'}}>JUDUL</Text>
+                <TextInput
+                  placeholder="Contoh: Perubahan Jadwal Praktikum"
+                  placeholderTextColor={theme.textMuted}
+                  value={title}
+                  onChangeText={setTitle}
+                  style={[styles.input, { borderColor: theme.border, color: theme.textPrimary, backgroundColor: theme.background }]}
+                />
+              </View>
+              <View style={styles.formGroup}>
+                <Text style={{color: theme.textSecondary, marginBottom: 6, fontSize: 12, fontWeight: '600'}}>ISI PENGUMUMAN</Text>
+                <TextInput
+                  placeholder="Tulis informasi detail di sini..."
+                  placeholderTextColor={theme.textMuted}
+                  value={content}
+                  onChangeText={setContent}
+                  multiline
+                  style={[styles.input, styles.textArea, { borderColor: theme.border, color: theme.textPrimary, backgroundColor: theme.background }]}
+                />
+              </View>
+              <View style={[styles.switchContainer, { backgroundColor: theme.background, borderColor: theme.border }]}> 
+                <View style={{flex: 1}}>
+                  <Text style={{ color: theme.textPrimary, fontWeight: '600' }}>Tandai Penting</Text>
+                  <Text variant="caption" style={{ color: theme.textSecondary }}>Akan muncul highlight merah</Text>
+                </View>
+                <Switch 
+                  value={isImportant} 
+                  onValueChange={setIsImportant} 
+                  trackColor={{ false: theme.border, true: theme.primary }}
+                />
+              </View>
+              <Button 
+                variant="primary" 
+                size="lg"
+                onPress={editAnnouncement ? handleUpdate : handleSubmit} 
+                loading={submitting}
+                style={{ marginTop: 8 }}
+              >
+                {editAnnouncement ? 'Update Pengumuman' : 'Kirim Pengumuman'}
+              </Button>
+            </ScrollView>
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -476,7 +546,6 @@ const styles = StyleSheet.create({
   headerContainer: {
     // Styles handled inline
   },
-  // --- STYLES BARU (SEARCH & FILTER) ---
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -490,6 +559,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     height: '100%',
+    marginLeft: 8,
   },
   chip: {
     paddingHorizontal: 16,
@@ -498,45 +568,36 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginRight: 4,
   },
-  // --- END STYLES BARU ---
+  // Card Styles
   card: {
-    padding: 0,
-    borderRadius: 16,
+    marginBottom: 12,
+    borderRadius: 12,
     borderWidth: 1,
-    marginBottom: 16,
+    padding: 0,
     overflow: 'hidden',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    marginBottom: 8,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    paddingHorizontal: 16,
-    marginBottom: 8,
   },
   cardContent: {
-    fontSize: 14,
-    lineHeight: 20,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
   },
-  cardFooter: {
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  contentInfo: {
+    flex: 1,
+  },
+  cardActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    paddingHorizontal: 16,
+    borderTopWidth: 1,
   },
+  // Empty State
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -551,6 +612,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     opacity: 0.5,
   },
+  // Modal Styles
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -559,15 +621,19 @@ const styles = StyleSheet.create({
   modalContent: {
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    padding: 24,
-    paddingBottom: 40,
-    elevation: 20,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    maxHeight: '85%',
+    paddingBottom: 10,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
   },
   formGroup: {
     marginBottom: 16,
