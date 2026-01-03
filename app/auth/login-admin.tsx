@@ -21,10 +21,13 @@ import { spacing, layout, borderRadius, colors } from '@/constants/theme'
 import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated'
 
 export default function LoginAdminScreen() {
+    const handleBack = () => {
+      router.replace('/auth-selection')
+    }
   const router = useRouter()
   const { theme } = useTheme()
   const { login } = useAuth()
-  
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -36,15 +39,15 @@ export default function LoginAdminScreen() {
     let isValid = true
 
     if (!email) {
-      newErrors.email = 'Email wajib diisi'
+      newErrors.email = 'Email admin wajib diisi'
       isValid = false
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Format email tidak valid'
+      newErrors.email = 'Format email admin tidak valid'
       isValid = false
     }
 
     if (!password) {
-      newErrors.password = 'Password wajib diisi'
+      newErrors.password = 'Kata sandi wajib diisi'
       isValid = false
     }
 
@@ -61,8 +64,8 @@ export default function LoginAdminScreen() {
       router.replace('/admin') // arahkan ke halaman admin utama
     } catch (error: any) {
       Alert.alert(
-        'Login Gagal',
-        error.message || 'Terjadi kesalahan saat login. Periksa kembali email dan password Anda.'
+        'Login Admin Gagal',
+        error.message || 'Terjadi kesalahan saat login admin. Periksa kembali email dan kata sandi Anda.'
       )
     } finally {
       setLoading(false)
@@ -74,7 +77,7 @@ export default function LoginAdminScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}> 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -84,30 +87,34 @@ export default function LoginAdminScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Tombol Back */}
+          <TouchableOpacity onPress={handleBack} style={{ position: 'absolute', top: 0, left: 0, zIndex: 10, padding: 8 }}>
+            <Ionicons name="arrow-back" size={28} color={theme.textPrimary} />
+          </TouchableOpacity>
           {/* Header Illustration / Icons */}
           <Animated.View entering={FadeInUp.delay(200).springify()} style={styles.header}>
              <View style={styles.floatingIconContainer}>
-                <View style={[styles.floatingIcon, { backgroundColor: colors.infoSoft, transform: [{ rotate: '-10deg' }] }]}>
+                <View style={[styles.floatingIcon, { backgroundColor: colors.infoSoft, transform: [{ rotate: '-10deg' }] }]}> 
                     <Ionicons name="flask" size={32} color={colors.info} />
                 </View>
-                <View style={[styles.floatingIcon, { backgroundColor: colors.warningSoft, marginTop: 40, transform: [{ rotate: '10deg' }] }]}>
+                <View style={[styles.floatingIcon, { backgroundColor: colors.warningSoft, marginTop: 40, transform: [{ rotate: '10deg' }] }]}> 
                     <Ionicons name="book" size={32} color={colors.warning} />
                 </View>
              </View>
              
             <Text variant="h1" weight="bold" style={{ color: theme.textPrimary, textAlign: 'center', marginBottom: spacing.sm }}>
-              Keep going your learn now
+              Login Admin
             </Text>
             <Text variant="body" style={{ color: theme.textSecondary, textAlign: 'center', maxWidth: '80%' }}>
-              Log in to access your virtual lab and continue your progress
+              Masuk ke panel admin untuk mengelola praktikum, modul, dan data mahasiswa.
             </Text>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(400).springify()} style={{ width: '100%' }}>
             <Card style={styles.formCard}>
                 <Input
-                label="Email"
-                placeholder="nama@mahasiswa.itb.ac.id"
+                label="Email Admin"
+                placeholder="admin@lab.itb.ac.id"
                 value={email}
                 onChangeText={(text) => {
                     setEmail(text)
@@ -121,8 +128,8 @@ export default function LoginAdminScreen() {
 
                 <View style={{ marginTop: spacing.md }}>
                 <Input
-                    label="Password"
-                    placeholder="Masukkan password"
+                    label="Kata Sandi"
+                    placeholder="Masukkan kata sandi admin"
                     value={password}
                     onChangeText={(text) => {
                     setPassword(text)
@@ -151,20 +158,11 @@ export default function LoginAdminScreen() {
                     size="lg"
                     variant="primary"
                 >
-                    Sign In
+                    Masuk Admin
                 </Button>
                 </View>
 
-                <View style={styles.footer}>
-                <Text variant="bodySmall" style={{ color: theme.textSecondary }}>
-                    Haven't an Account?{' '}
-                </Text>
-                <TouchableOpacity onPress={navigateToRegister}>
-                    <Text variant="bodySmall" weight="bold" style={{ color: theme.primary }}>
-                    Sign Up
-                    </Text>
-                </TouchableOpacity>
-                </View>
+                {/* Footer untuk daftar admin dihilangkan sesuai permintaan */}
             </Card>
           </Animated.View>
         </ScrollView>
