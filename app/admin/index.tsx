@@ -10,7 +10,8 @@ import {
   RefreshControl,
   KeyboardAvoidingView,
   Platform,
-  TouchableOpacity
+  TouchableOpacity,
+  ScrollView // Ditambahkan
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,7 +21,7 @@ import { api } from '@/lib/api';
 import { endpoints } from '@/constants/api';
 import type { Announcement } from '@/types';
 
-// Helper sederhana untuk format tanggal (Opsional, sesuaikan dengan library date Anda seperti dayjs/date-fns)
+// Helper format tanggal
 const formatDate = (dateString?: string) => {
   if (!dateString) return 'Baru saja';
   const date = new Date(dateString);
@@ -30,28 +31,58 @@ const formatDate = (dateString?: string) => {
 export default function AdminAnnouncementScreen() {
   const { theme } = useTheme();
 
-  // State
+  // --- STATE UTAMA ---
   const [modalVisible, setModalVisible] = useState(false);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isImportant, setIsImportant] = useState(false);
-  const [editAnnouncement, setEditAnnouncement] = useState<Announcement | null>(null)
+  const [editAnnouncement, setEditAnnouncement] = useState<Announcement | null>(null);
 
-  // Loading states
+  // --- STATE LOADING ---
   const [submitting, setSubmitting] = useState(false);
   const [loadingList, setLoadingList] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Data
+  // --- STATE DATA ---
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+
+  // --- STATE FILTER, SORT, SEARCH (BARU) ---
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [filterType, setFilterType] = useState<'all' | 'important'>('all');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc'); 
+
+  // --- EFFECT DEBOUNCE SEARCH ---
+  // Mencegah spam request API saat mengetik
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 500); // Delay 500ms
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // --- API HANDLERS ---
 
   const fetchAnnouncements = useCallback(async () => {
     try {
-      const response = await api.getWithQuery<Announcement[]>(endpoints.announcements.list, { page: 1, limit: 20 });
+      const queryParams: any = { 
+        page: 1, 
+        limit: 20,
+        search: debouncedSearch // keyword pencarian
+      };
+      if (filterType === 'important') {
+        queryParams.is_important = true;
+      }
+      // Always fetch without sort, sort client-side for full control
+      const response = await api.getWithQuery<Announcement[]>(endpoints.announcements.list, queryParams);
       if (response.success) {
-        setAnnouncements(response.data);
+        let sorted = [...response.data];
+        sorted.sort((a, b) => {
+          const dateA = new Date(a.published_at || a.created_at || 0).getTime();
+          const dateB = new Date(b.published_at || b.created_at || 0).getTime();
+          return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+        });
+        setAnnouncements(sorted);
       }
     } catch (e) {
       console.error("Fetch error", e);
@@ -59,8 +90,9 @@ export default function AdminAnnouncementScreen() {
       setLoadingList(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [debouncedSearch, filterType, sortOrder]);
 
+  // Panggil fetch awal dan setiap kali filter berubah
   useEffect(() => {
     fetchAnnouncements();
   }, [fetchAnnouncements]);
@@ -77,16 +109,13 @@ export default function AdminAnnouncementScreen() {
     }
     setSubmitting(true);
     try {
-      // Kirim hanya field yang diperlukan
       const payload: any = {
         title,
         content,
         is_important: isImportant,
-        // attachments: [], // Hapus/comment jika tidak ada lampiran
       };
 
       const response = await api.post<Announcement>(endpoints.announcements.list, payload);
-      console.log('POST response:', response);
       if (response.success) {
         setModalVisible(false);
         resetForm();
@@ -96,7 +125,6 @@ export default function AdminAnnouncementScreen() {
         Alert.alert('Gagal', response.message || 'Gagal membuat pengumuman.');
       }
     } catch (e) {
-      console.log('API error:', e);
       Alert.alert('Error', 'Terjadi kesalahan koneksi.');
     } finally {
       setSubmitting(false);
@@ -104,12 +132,12 @@ export default function AdminAnnouncementScreen() {
   };
 
   const handleEdit = (item: Announcement) => {
-    setEditAnnouncement(item)
-    setTitle(item.title)
-    setContent(item.content)
-    setIsImportant(!!item.is_important)
-    setModalVisible(true)
-  }
+    setEditAnnouncement(item);
+    setTitle(item.title);
+    setContent(item.content);
+    setIsImportant(!!item.is_important);
+    setModalVisible(true);
+  };
 
   const handleDelete = async (id: string | number) => {
     Alert.alert('Hapus Pengumuman', 'Yakin ingin menghapus pengumuman ini?', [
@@ -117,49 +145,49 @@ export default function AdminAnnouncementScreen() {
       {
         text: 'Hapus', style: 'destructive', onPress: async () => {
           try {
-            const response = await api.delete(`${endpoints.announcements.list}/${id}`)
+            const response = await api.delete(`${endpoints.announcements.list}/${id}`);
             if (response.success) {
-              fetchAnnouncements()
-              Alert.alert('Berhasil', 'Pengumuman dihapus.')
+              fetchAnnouncements();
+              Alert.alert('Berhasil', 'Pengumuman dihapus.');
             } else {
-              Alert.alert('Gagal', response.message || 'Gagal menghapus pengumuman.')
+              Alert.alert('Gagal', response.message || 'Gagal menghapus pengumuman.');
             }
           } catch (e) {
-            Alert.alert('Error', 'Terjadi kesalahan koneksi.')
+            Alert.alert('Error', 'Terjadi kesalahan koneksi.');
           }
         }
       }
-    ])
-  }
+    ]);
+  };
 
   const handleUpdate = async () => {
     if (!title.trim() || !content.trim()) {
-      Alert.alert('Form Belum Lengkap', 'Mohon isi judul dan konten pengumuman.')
-      return
+      Alert.alert('Form Belum Lengkap', 'Mohon isi judul dan konten pengumuman.');
+      return;
     }
-    setSubmitting(true)
+    setSubmitting(true);
     try {
       const payload: any = {
         title,
         content,
         is_important: isImportant,
-      }
-      const response = await api.put(`${endpoints.announcements.list}/${editAnnouncement?.id}`, payload)
+      };
+      const response = await api.put(`${endpoints.announcements.list}/${editAnnouncement?.id}`, payload);
       if (response.success) {
-        setModalVisible(false)
-        resetForm()
-        setEditAnnouncement(null)
-        fetchAnnouncements()
-        Alert.alert('Berhasil', 'Pengumuman berhasil diupdate.')
+        setModalVisible(false);
+        resetForm();
+        setEditAnnouncement(null);
+        fetchAnnouncements();
+        Alert.alert('Berhasil', 'Pengumuman berhasil diupdate.');
       } else {
-        Alert.alert('Gagal', response.message || 'Gagal update pengumuman.')
+        Alert.alert('Gagal', response.message || 'Gagal update pengumuman.');
       }
     } catch (e) {
-      Alert.alert('Error', 'Terjadi kesalahan koneksi.')
+      Alert.alert('Error', 'Terjadi kesalahan koneksi.');
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   const resetForm = () => {
     setTitle('');
@@ -170,24 +198,120 @@ export default function AdminAnnouncementScreen() {
   // --- RENDERERS ---
 
   const renderHeader = () => (
-    <View style={styles.headerContainer}>
-      <View>
-        <Text variant="h2" style={{ color: theme.textPrimary, fontWeight: '800' }}>
-          Pengumuman
-        </Text>
-        <Text style={{ color: theme.textSecondary, marginTop: 4 }}>
-          Kelola informasi untuk praktikan
-        </Text>
+    <View style={[styles.headerContainer, {
+      backgroundColor: theme.primary + '15',
+      borderRadius: 20,
+      padding: 20,
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 16, // Dikurangi agar tidak terlalu jauh dari search bar
+      marginTop: 8,
+      shadowColor: theme.primary,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 8,
+      elevation: 2,
+    }]}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+        <View style={{
+          backgroundColor: theme.primary,
+          borderRadius: 16,
+          width: 48,
+          height: 48,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginRight: 16,
+        }}>
+          <Ionicons name="megaphone" size={28} color={theme.textOnPrimary} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text variant="h2" style={{ color: theme.primary, fontWeight: '900', letterSpacing: 0.5, fontSize: 16 }}>
+            Pengumuman
+          </Text>
+          <Text style={{ color: theme.textSecondary, marginTop: 2, fontSize: 12, fontWeight: '500' }}>
+            Kelola informasi untuk praktikan
+          </Text>
+        </View>
       </View>
       <Button
         size="sm"
         variant="primary"
         leftIcon={<Ionicons name="add" size={18} color={theme.textOnPrimary} />}
         onPress={() => setModalVisible(true)}
-        style={{ borderRadius: 20, paddingHorizontal: 16 }}
+        style={{ borderRadius: 20, minWidth: 80, marginLeft: 12, paddingHorizontal: 0 }}
       >
         Baru
       </Button>
+    </View>
+  );
+
+  // --- RENDER SEARCH & FILTER (BARU) ---
+  const renderSearchAndFilter = () => (
+    <View style={{ marginBottom: 16 }}>
+      {/* Search Input */}
+      <View style={[styles.searchContainer, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        <Ionicons name="search" size={20} color={theme.textMuted} style={{ marginRight: 8 }} />
+        <TextInput
+          placeholder="Cari judul/konten..."
+          placeholderTextColor={theme.textMuted}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          style={[styles.searchInput, { color: theme.textPrimary }]}
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <Ionicons name="close-circle" size={18} color={theme.textMuted} />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Filter Chips & Sort */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
+        {/* Filter: Semua */}
+        <TouchableOpacity
+          onPress={() => setFilterType('all')}
+          style={[
+            styles.chip, 
+            { backgroundColor: filterType === 'all' ? theme.primary : theme.surface, borderColor: theme.border }
+          ]}
+        >
+          <Text style={{ color: filterType === 'all' ? theme.textOnPrimary : theme.textSecondary, fontSize: 13, fontWeight: '600' }}>
+            Semua
+          </Text>
+        </TouchableOpacity>
+
+        {/* Filter: Penting */}
+        <TouchableOpacity
+          onPress={() => setFilterType('important')}
+          style={[
+            styles.chip, 
+            { backgroundColor: filterType === 'important' ? theme.primary : theme.surface, borderColor: theme.border }
+          ]}
+        >
+          <Text style={{ color: filterType === 'important' ? theme.textOnPrimary : theme.textSecondary, fontSize: 13, fontWeight: '600' }}>
+            Penting
+          </Text>
+        </TouchableOpacity>
+
+        {/* Separator */}
+        <View style={{ width: 1, height: '60%', backgroundColor: theme.border, alignSelf: 'center', marginHorizontal: 4 }} />
+
+        {/* Sort Toggle */}
+        <TouchableOpacity
+          onPress={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
+          style={[styles.chip, { backgroundColor: theme.surface, borderColor: theme.border, flexDirection: 'row', alignItems: 'center' }]}
+        >
+          <Ionicons 
+            name={sortOrder === 'desc' ? "arrow-down" : "arrow-up"} 
+            size={14} 
+            color={theme.textSecondary} 
+            style={{ marginRight: 6 }} 
+          />
+          <Text style={{ color: theme.textSecondary, fontSize: 13, fontWeight: '600' }}>
+            {sortOrder === 'desc' ? 'Terbaru' : 'Terlama'}
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
     </View>
   );
 
@@ -229,11 +353,11 @@ export default function AdminAnnouncementScreen() {
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
       <View style={[styles.iconCircle, { backgroundColor: theme.border }]}>
-        <Ionicons name="megaphone-outline" size={40} color={theme.textMuted} />
+        <Ionicons name="search-outline" size={40} color={theme.textMuted} />
       </View>
-      <Text variant="h4" style={{ color: theme.textPrimary, marginTop: 16 }}>Belum ada pengumuman</Text>
+      <Text variant="h4" style={{ color: theme.textPrimary, marginTop: 16 }}>Tidak ada pengumuman</Text>
       <Text style={{ color: theme.textSecondary, textAlign: 'center', marginTop: 8, maxWidth: '80%' }}>
-        Tap tombol "Baru" di atas untuk membuat pengumuman pertama Anda.
+        {searchQuery ? 'Coba ubah kata kunci pencarian atau filter Anda.' : 'Tap tombol "Baru" untuk membuat pengumuman.'}
       </Text>
     </View>
   );
@@ -247,7 +371,15 @@ export default function AdminAnnouncementScreen() {
         keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
         renderItem={renderItem}
         contentContainerStyle={styles.listContent}
-        ListHeaderComponent={renderHeader}
+        
+        // Header Gabungan (Judul + Search/Filter)
+        ListHeaderComponent={
+          <View>
+            {renderHeader()}
+            {renderSearchAndFilter()}
+          </View>
+        }
+        
         ListEmptyComponent={!loadingList ? renderEmpty : null}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.primary]} />
@@ -261,15 +393,15 @@ export default function AdminAnnouncementScreen() {
         }
       />
 
-      {/* Modal Create */}
+      {/* Modal Create/Edit */}
       <Modal
         visible={modalVisible}
         animationType="slide"
         transparent={true}
         onRequestClose={() => {
-          setModalVisible(false)
-          setEditAnnouncement(null)
-          resetForm()
+          setModalVisible(false);
+          setEditAnnouncement(null);
+          resetForm();
         }}
       >
         <KeyboardAvoidingView 
@@ -280,9 +412,9 @@ export default function AdminAnnouncementScreen() {
             <View style={styles.modalHeader}>
               <Text variant="h3" style={{ color: theme.textPrimary }}>{editAnnouncement ? 'Edit Pengumuman' : 'Buat Pengumuman'}</Text>
               <TouchableOpacity onPress={() => {
-                setModalVisible(false)
-                setEditAnnouncement(null)
-                resetForm()
+                setModalVisible(false);
+                setEditAnnouncement(null);
+                resetForm();
               }}>
                 <Ionicons name="close-circle" size={28} color={theme.textMuted} />
               </TouchableOpacity>
@@ -342,14 +474,33 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   headerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 24,
-    marginTop: 8,
+    // Styles handled inline
   },
+  // --- STYLES BARU (SEARCH & FILTER) ---
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    height: 44,
+    marginBottom: 12,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    height: '100%',
+  },
+  chip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginRight: 4,
+  },
+  // --- END STYLES BARU ---
   card: {
-    padding: 0, // Reset default padding Card component jika ada
+    padding: 0,
     borderRadius: 16,
     borderWidth: 1,
     marginBottom: 16,
@@ -386,7 +537,6 @@ const styles = StyleSheet.create({
     padding: 12,
     paddingHorizontal: 16,
   },
-  // Empty State Styles
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -401,7 +551,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     opacity: 0.5,
   },
-  // Modal Styles
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',

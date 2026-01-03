@@ -129,35 +129,6 @@ export default function AdminMoreScreen() {
           }
         />
 
-        <Text variant="overline" style={[styles.sectionTitle, { color: theme.textMuted }]}>Informasi</Text>
-
-        <MenuItem
-          icon="information-circle"
-          label="Tentang Aplikasi"
-          desc="Versi, developer, lisensi"
-          onPress={() => router.push('/about' as any)}
-          iconBgColor={colors.infoSoft}
-          iconColor={colors.info}
-        />
-
-        <MenuItem
-          icon="help-circle"
-          label="Bantuan & FAQ"
-          desc="Pertanyaan yang sering diajukan"
-          onPress={() => router.push('/faq' as any)}
-          iconBgColor={colors.successSoft}
-          iconColor={colors.success}
-        />
-
-        <MenuItem
-          icon="mail"
-          label="Hubungi Kami"
-          desc="Kirim pesan ke lab"
-          onPress={() => router.push('/kontak' as any)}
-          iconBgColor={colors.accentSoft}
-          iconColor={colors.accent}
-        />
-
         <Text variant="overline" style={[styles.sectionTitle, { color: theme.textMuted }]}>Akun</Text>
 
         <MenuItem
