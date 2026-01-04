@@ -29,10 +29,10 @@ Download dari [**GitHub Releases**](https://github.com/suryasuharna23/virtual-la
 
 | Platform | File | Size | Link |
 |----------|------|------|------|
-| **Android** | `LabKimiaDasarITB.apk` | 91 MB | [⬇️ Download](https://github.com/suryasuharna23/virtual-lab-kimia-dasar-itb-mobile/releases/download/v1.0.0/LabKimiaDasarITB.apk) |
-| **iOS** | `LabKimiaDasarITB.ipa` | 12 MB | [⬇️ Download](https://github.com/suryasuharna23/virtual-lab-kimia-dasar-itb-mobile/releases/download/v1.0.0/LabKimiaDasarITB.ipa) |
+| **Android** | `LabKimiaDasarITB.apk` | 99 MB | [⬇️ Download](https://github.com/suryasuharna23/virtual-lab-kimia-dasar-itb-mobile/releases/download/v1.1.0/LabKimiaDasarITB.apk) |
+| **iOS** | `LabKimiaDasarITB.ipa` | 22 MB | [⬇️ Download](https://github.com/suryasuharna23/virtual-lab-kimia-dasar-itb-mobile/releases/download/v1.1.0/LabKimiaDasarITB.ipa) |
 
-*Build terakhir: 3 Januari 2026 (v1.0.0)*
+*Build terakhir: 4 Januari 2026 (v1.1.0)*
 
 ### B. Install di iOS
 Metode instalasi untuk perangkat iOS:
