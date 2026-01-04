@@ -6,6 +6,7 @@ import {
   Switch,
   Alert,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,8 +20,10 @@ import * as Haptics from 'expo-haptics';
 
 export default function AdminMoreScreen() {
   const { theme, isDark, toggleTheme } = useTheme();
-  const { logout } = useAuth();
+  const { user, logout, isAuthenticated } = useAuth();
   const router = useRouter();
+
+  const admin = user;
 
   const handleToggleTheme = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -43,6 +46,10 @@ export default function AdminMoreScreen() {
         },
       ]
     );
+  };
+
+  const handleNavigation = (path: string) => {
+    router.push(path as any);
   };
 
   const MenuItem = ({
@@ -109,6 +116,37 @@ export default function AdminMoreScreen() {
             Pengaturan dan informasi admin
           </Text>
         </View>
+
+        {/* Profil Admin */}
+        {isAuthenticated && admin && (
+          <Card
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginBottom: spacing.xl,
+              backgroundColor: theme.primarySoft,
+            }}
+          >
+            <View style={[styles.avatar, { backgroundColor: theme.primary, overflow: 'hidden' }]}>
+              {(admin as any).avatar_url ? (
+                <Image
+                  source={{ uri: (admin as any).avatar_url }}
+                  style={{ width: '100%', height: '100%' }}
+                />
+              ) : (
+                <Ionicons name="person" size={28} color={colors.white} />
+              )}
+            </View>
+            <View style={styles.profileInfo}>
+              <Text variant="h3" style={{ color: theme.textPrimary }}>
+                {admin.full_name || 'Admin'}
+              </Text>
+              <Text variant="body" style={{ color: theme.textSecondary }}>
+                {admin.email}
+              </Text>
+            </View>
+          </Card>
+        )}
 
         <Text variant="overline" style={[styles.sectionTitle, { color: theme.textMuted }]}>Pengaturan</Text>
 
@@ -190,5 +228,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: spacing.xl,
     gap: spacing.xs,
+  },
+  avatar: {
+    width: 56,
+    height: 56,
+    borderRadius: borderRadius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileInfo: {
+    flex: 1,
+    marginLeft: spacing.md,
   },
 });
