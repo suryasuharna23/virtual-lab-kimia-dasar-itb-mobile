@@ -25,7 +25,7 @@ export function AttendanceCard({
   onShowNametagPress,
   style,
 }: AttendanceCardProps) {
-  const { theme } = useTheme()
+  const { theme, isDark } = useTheme() // ambil isDark dari context
   
   // Calculate attendance streak (consecutive attended sessions from start)
   const attendedCount = sessions.filter(s => s.attended).length
@@ -140,15 +140,17 @@ export function AttendanceCard({
         )}
       </View>
 
-      <Button 
-        onPress={onShowNametagPress}
-        variant="primary"
-        fullWidth
-        size="md"
-        leftIcon={<Ionicons name="qr-code" size={18} color={colors.white} />}
-      >
-        Tampilkan Nametag
-      </Button>
+<Button 
+          onPress={onShowNametagPress}
+          variant="primary"
+          fullWidth
+          size="md"
+          iconName="qr-code"
+          // FIX DARK MODE: Paksa text hitam jika dark mode (karena background putih/terang)
+          textColor={isDark ? '#000000' : undefined}
+        >
+          Tampilkan Nametag
+        </Button>
     </View>
   )
 }

@@ -26,7 +26,7 @@ import { Student } from '@/types'
 
 export default function ProfileScreen() {
   const router = useRouter()
-  const { theme } = useTheme()
+  const { theme, isDark } = useTheme() // tambahkan isDark
   const { user, refreshUser } = useAuth()
   
   const [formData, setFormData] = useState({
@@ -257,6 +257,7 @@ export default function ProfileScreen() {
                   fullWidth
                   size="lg"
                   variant="primary"
+                  textColor={isDark ? '#000' : undefined} // tambahkan baris ini
                 >
                   Simpan Perubahan
                 </Button>

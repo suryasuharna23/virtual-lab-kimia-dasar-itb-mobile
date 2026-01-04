@@ -34,7 +34,7 @@ const difficultyLabels = {
 };
 
 export default function VirtualLabListScreen() {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme(); // tambahkan isDark
   const router = useRouter();
   const practices = getAllPractices();
   
@@ -172,18 +172,20 @@ export default function VirtualLabListScreen() {
               <View style={styles.modalActions}>
                 <Button 
                   variant="secondary" 
-                  style={{ flex: 1 }}
+                  style={{ flex: 1, alignItems: 'center' }} // pastikan tombolnya juga rata tengah
                   onPress={() => setSelectedPractice(null)}
+                  textColor="#FFF"
                 >
                   Mode Sandbox
                 </Button>
                 <Button 
-                  style={{ flex: 1 }}
+                  style={{ flex: 1, alignItems: 'center' }}
                   onPress={() => {
                     const id = selectedPractice.id;
                     setSelectedPractice(null);
                     router.push({ pathname: '/(tabs)/virtual-lab/[practiceId]', params: { practiceId: id } });
                   }}
+                  textColor={isDark ? '#000' : undefined}
                 >
                   Mulai Panduan
                 </Button>

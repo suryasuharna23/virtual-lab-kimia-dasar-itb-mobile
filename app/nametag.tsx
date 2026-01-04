@@ -16,7 +16,7 @@ import { spacing, borderRadius, colors } from '@/constants/theme'
 import { Student } from '@/types'
 
 export default function NametagScreen() {
-  const { theme } = useTheme()
+  const { theme, isDark } = useTheme() // tambahkan isDark
   const { user } = useAuth()
   const router = useRouter()
   const student = user as Student | null
@@ -163,7 +163,16 @@ export default function NametagScreen() {
               fullWidth
               onPress={simulateScan}
               loading={isScanning}
-              leftIcon={!isScanning ? <Ionicons name="scan" size={20} color={colors.white} /> : undefined}
+              leftIcon={
+                !isScanning ? (
+                  <Ionicons
+                    name="scan"
+                    size={20}
+                    color={isDark ? '#000' : colors.white} // warna icon mengikuti warna font
+                  />
+                ) : undefined
+              }
+              textColor={isDark ? '#000' : undefined}
             >
               {isScanning ? 'Memindai QR Code...' : 'Simulasi Scan Absen'}
             </Button>
@@ -183,6 +192,14 @@ export default function NametagScreen() {
                 size="md"
                 onPress={resetScan}
                 style={{ marginTop: spacing.md }}
+                textColor={isDark ? '#000' : undefined}
+                leftIcon={
+                  <Ionicons
+                    name="refresh"
+                    size={20}
+                    color={isDark ? '#000' : colors.primary}
+                  />
+                }
               >
                 Simulasi Ulang
               </Button>
@@ -203,6 +220,14 @@ export default function NametagScreen() {
                 size="md"
                 onPress={simulateScan}
                 style={{ marginTop: spacing.md }}
+                textColor={isDark ? '#000' : undefined}
+                leftIcon={
+                  <Ionicons
+                    name="scan"
+                    size={20}
+                    color={isDark ? '#000' : colors.white}
+                  />
+                }
               >
                 Coba Lagi
               </Button>
