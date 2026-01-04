@@ -104,19 +104,20 @@ export interface NilaiFile {
   name?: string
 }
 
-export interface Group {
-  id: string | number
-  name: string
-  description: string
-  storage_path: string
-  cohort: string
-  visibility: 'public' | 'private'
-  has_password: boolean
-  file_size?: number
-  file_type?: string
-  download_count?: number
-  created_at: string
-  updated_at: string
+export type Group = {
+  id: string;
+  name: string;
+  description: string;
+  storage_path: string;
+  cohort: string;
+  visibility: 'public' | 'private';
+  has_password: boolean;
+  file_size?: number;
+  file_type?: string;
+  download_count?: number;
+  created_at: string;
+  updated_at: string;
+  members_count?: number; // Add this line
 }
 
 export interface ContactMessage {

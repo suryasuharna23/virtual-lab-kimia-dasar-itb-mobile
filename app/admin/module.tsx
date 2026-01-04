@@ -32,7 +32,8 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 }
 
 export default function AdminModuleScreen() {
-  const { theme } = useTheme()
+  // AMBIL isDark UNTUK FIX CONTRAST
+  const { theme, isDark } = useTheme()
   
   // Data State
   const [modules, setModules] = useState<Module[]>([])
@@ -256,7 +257,6 @@ export default function AdminModuleScreen() {
 
   // --- RENDERERS ---
 
-  // Header yang sudah disesuaikan dengan style Announcement
   const renderHeader = () => (
     <View style={[styles.headerContainer, {
       backgroundColor: theme.primary + '15',
@@ -273,33 +273,23 @@ export default function AdminModuleScreen() {
       elevation: 2,
     }]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-        <View style={{
-          backgroundColor: theme.primary,
-          borderRadius: 16,
-          width: 48,
-          height: 48,
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginRight: 16,
-        }}>
-          {/* Menggunakan icon document-text agar sesuai konteks modul */}
-          <Ionicons name="document-text" size={28} color={theme.textOnPrimary} />
-        </View>
         <View style={{ flex: 1 }}>
           <Text variant="h2" style={{ color: theme.primary, fontWeight: '900', letterSpacing: 0.5, fontSize: 16 }}>
-            Modul Praktik
+            Modul Praktikum
           </Text>
           <Text style={{ color: theme.textSecondary, marginTop: 2, fontSize: 12, fontWeight: '500' }}>
             Kelola materi pembelajaran
           </Text>
         </View>
       </View>
+      {/* UPDATE BUTTON BARU: Pakai iconName & textColor */}
       <Button
         size="sm"
         variant="primary"
-        leftIcon={<Ionicons name="add" size={18} color={theme.textOnPrimary} />}
+        iconName="add"
         onPress={openUpload}
         style={{ borderRadius: 20, minWidth: 80, marginLeft: 12, paddingHorizontal: 0 }}
+        textColor={isDark ? '#000000' : theme.textOnPrimary}
       >
         Baru
       </Button>
@@ -330,34 +320,34 @@ export default function AdminModuleScreen() {
 
       {/* Filter & Sort Chips */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 4 }}>
-        {/* Filter Type */}
+        
+        {/* IMPLEMENTASI BUTTON FILTER YANG DIPERBAIKI */}
         {(['all', 'public', 'private'] as const).map((type) => (
-          <TouchableOpacity
+          <Button
             key={type}
+            size="sm"
+            variant={filterType === type ? 'primary' : 'ghost'}
             onPress={() => {
               LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
               setFilterType(type);
             }}
-            style={[
-              styles.chip,
-              { 
-                backgroundColor: filterType === type ? theme.primary : theme.surface,
-                borderColor: filterType === type ? theme.primary : theme.border 
-              }
-            ]}
+            style={{ 
+              borderWidth: 1,
+              borderColor: filterType === type ? theme.primary : theme.border,
+              backgroundColor: filterType === type ? theme.primary : theme.surface,
+              height: 36,
+              // minWidth: 0, // Reset jika Button punya default minWidth
+            }}
+            // Force text black jika Dark Mode & Selected
+            textColor={filterType === type && isDark ? '#000000' : undefined}
           >
-            <Text style={{ 
-              color: filterType === type ? theme.textOnPrimary : theme.textSecondary, 
-              fontSize: 13, fontWeight: '600', capitalize: 'sentences' 
-            }}>
-              {type === 'all' ? 'Semua' : type === 'public' ? 'Publik' : 'Privat'}
-            </Text>
-          </TouchableOpacity>
+             {type === 'all' ? 'Semua' : type === 'public' ? 'Publik' : 'Privat'}
+          </Button>
         ))}
 
         <View style={{ width: 1, height: 20, backgroundColor: theme.border, alignSelf: 'center', marginHorizontal: 4 }} />
 
-        {/* Sort Toggle */}
+        {/* Sort Toggle (Bisa tetap TouchableOpacity atau Button, kita samakan style chipnya) */}
         <TouchableOpacity
           onPress={() => {
             LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -583,6 +573,8 @@ export default function AdminModuleScreen() {
               onPress={editId ? handleEdit : handleUpload}
               loading={uploading}
               style={{ marginTop: 8 }}
+              // Kontras aman untuk tombol utama modal
+              textColor={isDark ? '#000000' : undefined}
             >
               {editId ? 'Simpan' : 'Upload Sekarang'}
             </Button>

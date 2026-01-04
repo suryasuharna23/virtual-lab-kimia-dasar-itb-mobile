@@ -38,7 +38,7 @@ const formatDate = (dateString?: string) => {
 };
 
 export default function AdminAnnouncementScreen() {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
 
   // --- STATE UTAMA ---
   const [modalVisible, setModalVisible] = useState(false);
@@ -63,7 +63,6 @@ export default function AdminAnnouncementScreen() {
   // --- API HANDLERS ---
   const fetchAnnouncements = useCallback(async () => {
     try {
-      // Fetch data lebih banyak untuk mendukung client-side filtering yang mulus
       const response = await api.getWithQuery<Announcement[]>(endpoints.announcements.list, { 
         page: 1, 
         limit: 100 
@@ -235,17 +234,6 @@ export default function AdminAnnouncementScreen() {
       elevation: 2,
     }]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-        <View style={{
-          backgroundColor: theme.primary,
-          borderRadius: 16,
-          width: 48,
-          height: 48,
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginRight: 16,
-        }}>
-          <Ionicons name="megaphone" size={28} color={theme.textOnPrimary} />
-        </View>
         <View style={{ flex: 1 }}>
           <Text variant="h2" style={{ color: theme.primary, fontWeight: '900', letterSpacing: 0.5, fontSize: 16 }}>
             Pengumuman
@@ -255,12 +243,16 @@ export default function AdminAnnouncementScreen() {
           </Text>
         </View>
       </View>
+      
+      {/* BUTTON BARU - SUDAH DIPERBAIKI */}
       <Button
         size="sm"
         variant="primary"
-        leftIcon={<Ionicons name="add" size={18} color={theme.textOnPrimary} />}
+        iconName="add" // Gunakan ini agar warna icon sinkron dengan teks
         onPress={openCreate}
         style={{ borderRadius: 20, minWidth: 80, marginLeft: 12, paddingHorizontal: 0 }}
+        // Force Text Hitam jika Dark Mode (karena background Putih)
+        textColor={isDark ? '#000000' : theme.textOnPrimary} 
       >
         Baru
       </Button>
@@ -289,45 +281,48 @@ export default function AdminAnnouncementScreen() {
         )}
       </View>
 
-      {/* Filter Chips & Sort */}
+      {/* Filter Chips & Sort - SUDAH DIPERBAIKI */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 4 }}>
+        
         {/* Filter: Semua */}
-        <TouchableOpacity
+        <Button
+          size="sm"
+          variant={filterType === 'all' ? 'primary' : 'ghost'}
           onPress={() => {
             LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
             setFilterType('all');
           }}
-          style={[
-            styles.chip, 
-            { 
-              backgroundColor: filterType === 'all' ? theme.primary : theme.surface, 
-              borderColor: filterType === 'all' ? theme.primary : theme.border 
-            }
-          ]}
+          style={{
+            borderWidth: 1,
+            borderColor: filterType === 'all' ? theme.primary : theme.border,
+            backgroundColor: filterType === 'all' ? theme.primary : theme.surface,
+            height: 36,
+          }}
+          // Force Text Hitam jika Dark Mode & Selected
+          textColor={filterType === 'all' && isDark ? '#000000' : undefined}
         >
-          <Text style={{ color: filterType === 'all' ? theme.textOnPrimary : theme.textSecondary, fontSize: 13, fontWeight: '600' }}>
-            Semua
-          </Text>
-        </TouchableOpacity>
+          Semua
+        </Button>
 
         {/* Filter: Penting */}
-        <TouchableOpacity
+        <Button
+          size="sm"
+          variant={filterType === 'important' ? 'primary' : 'ghost'}
           onPress={() => {
             LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
             setFilterType('important');
           }}
-          style={[
-            styles.chip, 
-            { 
-              backgroundColor: filterType === 'important' ? theme.primary : theme.surface, 
-              borderColor: filterType === 'important' ? theme.primary : theme.border 
-            }
-          ]}
+          style={{
+            borderWidth: 1,
+            borderColor: filterType === 'important' ? theme.primary : theme.border,
+            backgroundColor: filterType === 'important' ? theme.primary : theme.surface,
+            height: 36,
+          }}
+          // Force Text Hitam jika Dark Mode & Selected
+          textColor={filterType === 'important' && isDark ? '#000000' : undefined}
         >
-          <Text style={{ color: filterType === 'important' ? theme.textOnPrimary : theme.textSecondary, fontSize: 13, fontWeight: '600' }}>
-            Penting
-          </Text>
-        </TouchableOpacity>
+          Penting
+        </Button>
 
         {/* Separator */}
         <View style={{ width: 1, height: '60%', backgroundColor: theme.border, alignSelf: 'center', marginHorizontal: 4 }} />
@@ -526,6 +521,8 @@ export default function AdminAnnouncementScreen() {
                 onPress={editAnnouncement ? handleUpdate : handleSubmit} 
                 loading={submitting}
                 style={{ marginTop: 8 }}
+                // Opsional: Tombol submit juga menggunakan logika yang sama untuk konsistensi
+                textColor={isDark ? '#000000' : undefined}
               >
                 {editAnnouncement ? 'Update Pengumuman' : 'Kirim Pengumuman'}
               </Button>

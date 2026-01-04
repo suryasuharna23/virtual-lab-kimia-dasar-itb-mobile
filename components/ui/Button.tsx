@@ -24,6 +24,8 @@ interface ButtonProps {
   onPress?: () => void
   children: React.ReactNode
   style?: ViewStyle
+  // Tambahan prop baru untuk kontrol manual
+  textColor?: string 
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
@@ -40,6 +42,7 @@ export function Button({
   onPress,
   children,
   style,
+  textColor, // Destructure prop baru
 }: ButtonProps) {
   const { theme, isDark } = useTheme()
   
@@ -59,6 +62,7 @@ export function Button({
 
   // Determine colors based on variant
   const getColors = () => {
+    // 1. Jika disabled
     if (disabled) {
       return {
         bg: theme.border,
@@ -66,91 +70,76 @@ export function Button({
       }
     }
 
+    // 2. Logic Dark Mode yang diperbaiki
     if (isDark) {
+      const bg = (() => {
+        switch (variant) {
+          case 'primary': return theme.primary;
+          case 'secondary': return theme.primarySoft;
+          case 'accent': return theme.accent;
+          case 'success': return colors.success;
+          case 'danger': return colors.error;
+          case 'ghost': return 'transparent';
+          default: return theme.primary;
+        }
+      })();
+      
+      // Normalisasi ke lowercase agar #FFFFFF sama dengan #ffffff
+      const bgLower = typeof bg === 'string' ? bg.toLowerCase() : '';
+      
+      // List warna terang yang HARUS pakai teks gelap
+      const lightBgList = [
+        colors.white.toLowerCase(), 
+        '#ffffff', 
+        '#fff', 
+        'white',
+        theme.surface.toLowerCase(), 
+        theme.primarySoft.toLowerCase(), 
+        theme.accentSoft.toLowerCase()
+      ];
+      
+      // Cek apakah background termasuk warna terang
+      const isLightBg = lightBgList.includes(bgLower);
+      
       return {
-        bg: (() => {
-          switch (variant) {
-            case 'primary': return theme.primary;
-            case 'secondary': return theme.primarySoft;
-            case 'accent': return theme.accent;
-            case 'success': return colors.success;
-            case 'danger': return colors.error;
-            case 'ghost': return 'transparent';
-            default: return theme.primary;
-          }
-        })(),
-        text: '#1E1B4B',
-      }
+        bg,
+        // Jika background terang -> teks hitam (#1E1B4B)
+        // Jika background gelap -> teks warna theme.textPrimary (biasanya putih)
+        text: isLightBg ? '#1E1B4B' : theme.textPrimary,
+      };
     }
 
-    // Light mode: default logic
+    // 3. Logic Light Mode (Default)
     switch (variant) {
-      case 'primary':
-        return {
-          bg: theme.primary,
-          text: colors.white,
-        }
-      case 'secondary':
-        return {
-          bg: theme.primarySoft,
-          text: theme.primary,
-        }
-      case 'accent':
-        return {
-          bg: theme.accent,
-          text: colors.white,
-        }
-      case 'success':
-        return {
-          bg: colors.success,
-          text: colors.white,
-        }
-      case 'danger':
-        return {
-          bg: colors.error,
-          text: colors.white,
-        }
-      case 'ghost':
-        return {
-          bg: 'transparent',
-          text: theme.primary,
-        }
-      default:
-        return {
-          bg: theme.primary,
-          text: colors.white,
-        }
+      case 'primary': return { bg: theme.primary, text: colors.white }
+      case 'secondary': return { bg: theme.primarySoft, text: theme.primary }
+      case 'accent': return { bg: theme.accent, text: colors.white }
+      case 'success': return { bg: colors.success, text: colors.white }
+      case 'danger': return { bg: colors.error, text: colors.white }
+      case 'ghost': return { bg: 'transparent', text: theme.primary }
+      default: return { bg: theme.primary, text: colors.white }
     }
   }
+
   // Styles based on size
   const getDimensions = () => {
     switch (size) {
       case 'sm':
-        return {
-          paddingVertical: spacing.xs,
-          paddingHorizontal: spacing.md,
-          fontSize: 14,
-          height: 36,
-        }
+        return { paddingVertical: spacing.xs, paddingHorizontal: spacing.md, fontSize: 14, height: 36 }
       case 'lg':
-        return {
-          paddingVertical: spacing.md,
-          paddingHorizontal: spacing.xl,
-          fontSize: 18,
-          height: 56,
-        }
+        return { paddingVertical: spacing.md, paddingHorizontal: spacing.xl, fontSize: 18, height: 56 }
       default: // md
-        return {
-          paddingVertical: spacing.sm,
-          paddingHorizontal: spacing.lg,
-          fontSize: 16,
-          height: 48,
-        }
+        return { paddingVertical: spacing.sm, paddingHorizontal: spacing.lg, fontSize: 16, height: 48 }
     }
   }
 
   const dims = getDimensions()
   const colorScheme = getColors();
+
+  // PRIORITAS WARNA TEKS:
+  // 1. Prop `textColor` manual (jika ada)
+  // 2. Warna hasil kalkulasi `colorScheme.text`
+  const finalTextColor = textColor || colorScheme.text;
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -174,7 +163,7 @@ export function Button({
           alignItems: 'center',
         },
         animatedStyle,
-        style
+        style // Style override user (hati-hati, ini menimpa backgroundColor tapi tidak text color)
       ]}
       disabled={disabled || loading}
     >
@@ -187,7 +176,7 @@ export function Button({
         }}
       >
         {loading ? (
-          <ActivityIndicator color={colorScheme.text} size="small" />
+          <ActivityIndicator color={finalTextColor} size="small" />
         ) : (
           <>
             {leftIcon && <View style={{ marginRight: spacing.sm }}>{leftIcon}</View>}
@@ -195,13 +184,13 @@ export function Button({
               <Ionicons 
                 name={iconName} 
                 size={dims.fontSize + 4} 
-                color={colorScheme.text} 
+                color={finalTextColor} 
                 style={{ marginRight: spacing.sm }}
               />
             )}
             <Text
               style={{
-                color: colorScheme.text,
+                color: finalTextColor, // Pakai finalTextColor
                 fontSize: dims.fontSize,
                 fontWeight: '700',
               }}
