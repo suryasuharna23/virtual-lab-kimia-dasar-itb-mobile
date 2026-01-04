@@ -114,8 +114,8 @@ export const darkTheme: Theme = {
   border: '#3B3756',
   borderLight: '#4B4768',
   textPrimary: '#F5F3FF',
-  textSecondary: '#9CA3AF',
-  textMuted: '#6B7280',
+  textSecondary: '#CBD5E1',
+  textMuted: '#94A3B8',
   textOnPrimary: '#FFFFFF',
   primary: '#E8E6F2',
   primaryLight: '#C4B5FD',
@@ -126,13 +126,13 @@ export const darkTheme: Theme = {
   accentDark: colors.accentDark,
   accentSoft: '#422006',
   success: colors.success,
-  successSoft: colors.successDark, 
+  successSoft: '#064E3B',
   warning: colors.warning,
-  warningSoft: colors.warningDark,
+  warningSoft: '#78350F',
   error: colors.error,
-  errorSoft: colors.errorDark,
+  errorSoft: '#7F1D1D',
   info: colors.info,
-  infoSoft: colors.infoDark,
+  infoSoft: '#1E3A8A',
 }
 
 // === TYPOGRAPHY ===
