@@ -27,36 +27,74 @@ Aplikasi **Lab Kimia Dasar ITB** dirancang untuk mendigitalkan pengalaman prakti
 
 Download dari [**GitHub Releases**](https://github.com/suryasuharna23/virtual-lab-kimia-dasar-itb-mobile/releases/latest):
 
-| Platform | File | Size | Link |
-|----------|------|------|------|
-| **Android** | `LabKimiaDasarITB.apk` | 99 MB | [⬇️ Download](https://github.com/suryasuharna23/virtual-lab-kimia-dasar-itb-mobile/releases/download/v1.1.0/LabKimiaDasarITB.apk) |
-| **iOS** | `LabKimiaDasarITB.ipa` | 22 MB | [⬇️ Download](https://github.com/suryasuharna23/virtual-lab-kimia-dasar-itb-mobile/releases/download/v1.1.0/LabKimiaDasarITB.ipa) |
+| Platform | File | Size | Link | Catatan |
+|----------|------|------|------|---------|
+| **Android** | `LabKimiaDasarITB.apk` | 99 MB | [⬇️ Download](https://github.com/suryasuharna23/virtual-lab-kimia-dasar-itb-mobile/releases/download/v1.1.0/LabKimiaDasarITB.apk) | Siap install |
+| **iOS (Signed)** | `LabKimiaDasarITB-signed.ipa` | 23 MB | [⬇️ Download](https://github.com/suryasuharna23/virtual-lab-kimia-dasar-itb-mobile/releases/download/v1.1.0-signed/LabKimiaDasarITB-signed.ipa) | ✨ **Termudah**, drag & drop ke Xcode |
+| **iOS (Unsigned)** | `LabKimiaDasarITB.ipa` | 22 MB | [⬇️ Download](https://github.com/suryasuharna23/virtual-lab-kimia-dasar-itb-mobile/releases/download/v1.1.0/LabKimiaDasarITB.ipa) | Perlu Sideloadly/AltStore |
 
 *Build terakhir: 4 Januari 2026 (v1.1.0)*
 
+> 💡 **Rekomendasi iOS**: 
+> - Punya Mac + Xcode? → Gunakan **Signed IPA** (drag & drop ke Xcode Devices)
+> - Tidak punya Mac? → Gunakan **Unsigned IPA** dengan Sideloadly (Windows/Mac)
+
 ### B. Install di iOS
-Metode instalasi untuk perangkat iOS:
 
-- **Metode Sideloadly (Direkomendasikan untuk non-jailbroken)**:
-  1. Unduh Sideloadly di [sideloadly.io](https://sideloadly.io/).
-  2. Hubungkan iPhone ke Mac/PC via USB.
-  3. Seret file `.ipa` ke jendela Sideloadly.
-  4. Masukkan Apple ID Anda.
-  5. Klik **Start**.
-  6. Di iPhone: Buka **Settings > General > VPN & Device Management**, percayai (*Trust*) profil pengembang Anda.
+#### Opsi 1: Xcode Devices (Termudah - Signed IPA) ✨
 
-- **Metode AltStore**:
-  1. Instal AltServer di komputer Anda.
-  2. Instal AltStore ke iPhone.
-  3. Gunakan fitur "Open with AltStore" pada file `.ipa`.
+**Untuk**: Mac user dengan Xcode
 
-- **Metode Xcode (Untuk Developer)**:
-  1. Buka `ios/LabKimiaDasarITB.xcworkspace` di Xcode.
-  2. Pilih target perangkat fisik.
-  3. Atur *Signing & Capabilities* dengan akun developer Anda.
-  4. Klik **Build and Run**.
+1. Download **LabKimiaDasarITB-signed.ipa**
+2. Connect iPhone via USB
+3. Xcode → **Window** → **Devices and Simulators** (⇧⌘2)
+4. Pilih device kamu di sidebar
+5. **Drag & drop** IPA ke bagian "Installed Apps"
+6. Di iPhone: Settings → General → VPN & Device Management → **Trust**
+
+> ⚠️ **Kadaluarsa 7 hari** - perlu reinstall setiap minggu
+
+---
+
+#### Opsi 2: Sideloadly (Untuk semua platform - Unsigned IPA)
+
+**Untuk**: Windows/Mac tanpa Xcode, atau mau pakai Apple ID sendiri
+
+1. Download **LabKimiaDasarITB.ipa** (unsigned)
+2. Install Sideloadly dari [sideloadly.io](https://sideloadly.io/)
+3. Connect iPhone via USB
+4. Drag IPA ke Sideloadly
+5. Masukkan Apple ID kamu → **Start**
+6. Di iPhone: Settings → General → VPN & Device Management → **Trust**
+
+---
+
+#### Opsi 3: AltStore
+
+**Untuk**: Alternatif Sideloadly
+
+1. Download **LabKimiaDasarITB.ipa** (unsigned)
+2. Install AltServer di komputer
+3. Install AltStore ke iPhone via AltServer
+4. Open IPA dengan AltStore
+
+---
+
+#### Opsi 4: Build dari Source (Developer)
+
+**Untuk**: Developer yang mau build sendiri
+#### Opsi 4: Build dari Source (Developer)
+
+**Untuk**: Developer yang mau build sendiri
+
+1. Buka `ios/LabKimiaDasarITB.xcworkspace` di Xcode
+2. Pilih device fisik di top bar
+3. Signing & Capabilities → Pilih Team (Personal Team)
+4. Klik **▶️ Run**
 
 > **⚠️ Perhatian**: Build iOS yang diinstal dengan akun Apple ID gratis akan kadaluarsa dalam **7 hari**. Anda perlu melakukan proses instalasi ulang setelah masa berlaku habis.
+
+---
 
 ### C. Install di Android
 - **Instalasi Langsung**:
