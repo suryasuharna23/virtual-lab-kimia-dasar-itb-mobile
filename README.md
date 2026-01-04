@@ -79,10 +79,6 @@ Download dari [**GitHub Releases**](https://github.com/suryasuharna23/virtual-la
 4. Open IPA dengan AltStore
 
 ---
-
-#### Opsi 4: Build dari Source (Developer)
-
-**Untuk**: Developer yang mau build sendiri
 #### Opsi 4: Build dari Source (Developer)
 
 **Untuk**: Developer yang mau build sendiri
