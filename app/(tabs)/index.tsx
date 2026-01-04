@@ -5,6 +5,8 @@ import {
   RefreshControl,
   StyleSheet,
   Alert,
+  Image,
+  FlatList
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
@@ -33,6 +35,12 @@ const DUMMY_SESSIONS: PraktikumSession[] = [
   { id: '5', moduleNumber: 5, moduleName: 'Laju Reaksi', date: '2025-03-10', attended: false },
   { id: '6', moduleNumber: 6, moduleName: 'Larutan Koloid', date: '2025-03-17', attended: false },
   { id: '7', moduleNumber: 7, moduleName: 'Analisis Kualitatif', date: '2025-03-24', attended: false },
+]
+
+const labImages = [
+  require('@/assets/images/lab-kimia-1.png'),
+  require('@/assets/images/lab-kimia-2.png'),
+  require('@/assets/images/lab-kimia-3.png'),
 ]
 
 export default function HomeScreen() {
@@ -138,20 +146,44 @@ export default function HomeScreen() {
             />
           </Animated.View>
 
+          {/* SECTION GAMBAR SLIDE */}
           <View style={{ marginBottom: spacing.xl }}>
-             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md }}>
-                <Text variant="h3" weight="bold" style={{ color: theme.textPrimary }}>
-                  Modul Praktikum
-                </Text>
-                <Text 
-                  variant="bodySmall" 
-                  weight="bold" 
-                  style={{ color: theme.primary }}
-                  onPress={() => router.push('/(tabs)/praktikum' as any)}
-                >
-                  Lihat semua
-                </Text>
-             </View>
+            <FlatList
+              data={labImages}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(_, idx) => idx.toString()}
+              renderItem={({ item }) => (
+                <View style={styles.imageShadow}>
+                  <Image
+                    source={item}
+                    style={{ width: 280, height: 140, borderRadius: 16 }}
+                    resizeMode="cover"
+                  />
+                </View>
+              )}
+              contentContainerStyle={{ gap: spacing.md, paddingHorizontal: layout.screenPaddingHorizontal }}
+              snapToAlignment="center"
+              decelerationRate="fast"
+            />
+          </View>
+
+          {/* Section Modul Praktikum */}
+          <View style={{ marginBottom: spacing.xl }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md }}>
+              <Text variant="h3" weight="bold" style={{ color: theme.textPrimary }}>
+                Modul Praktikum
+              </Text>
+              <Text 
+                variant="bodySmall" 
+                weight="bold" 
+                style={{ color: theme.primary }}
+                onPress={() => router.push('/(tabs)/praktikum' as any)}
+              >
+                Lihat semua
+              </Text>
+            </View>
           </View>
 
           <ScrollView 
@@ -232,5 +264,14 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: layout.screenPaddingHorizontal,
     paddingVertical: spacing.lg,
+  },
+  imageShadow: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 6,
+    borderRadius: 16,
+    backgroundColor: '#fff',
   },
 })
