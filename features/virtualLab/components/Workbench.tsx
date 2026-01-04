@@ -362,6 +362,7 @@ function Vessel({ vessel, isTarget, onTap, theme }: VesselProps) {
 
 export function Workbench({ vessels, selectedItemId, onVesselTap, theme }: WorkbenchProps) {
   const hasSelection = selectedItemId !== null;
+  const textOnPrimary = theme.primary === '#E8E6F2' ? '#1E1B4B' : '#FFF';
 
   return (
     <View style={[styles.workbench, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -382,7 +383,7 @@ export function Workbench({ vessels, selectedItemId, onVesselTap, theme }: Workb
 
       {hasSelection ? (
         <Animated.View entering={FadeIn.duration(400)} style={[styles.instructionTag, { backgroundColor: theme.primary }]}>
-          <Text style={styles.instructionText}>Ketuk wadah untuk menuang/menggunakan</Text>
+          <Text style={[styles.instructionText, { color: textOnPrimary }]}>Ketuk wadah untuk menuang/menggunakan</Text>
         </Animated.View>
       ) : (
         <View style={styles.tableLabelContainer}>

@@ -95,7 +95,8 @@ export function Button({
         'white',
         theme.surface.toLowerCase(), 
         theme.primarySoft.toLowerCase(), 
-        theme.accentSoft.toLowerCase()
+        theme.accentSoft.toLowerCase(),
+        theme.primary.toLowerCase()
       ];
       
       // Cek apakah background termasuk warna terang

@@ -21,7 +21,7 @@ type ActionType = 'pour' | 'addDrops' | 'stir' | 'measureTemp';
 
 export default function VirtualLabSimulationScreen() {
   const { practiceId } = useLocalSearchParams<{ practiceId: string }>();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [showActionSheet, setShowActionSheet] = useState(false);
@@ -176,8 +176,8 @@ export default function VirtualLabSimulationScreen() {
       <View style={[styles.bottomPanel, { backgroundColor: theme.surface, paddingBottom: Math.max(insets.bottom, 16) }]}>
         {state.selectedItemId && (
           <View style={[styles.holdingBadge, { backgroundColor: theme.primary }]}>
-            <Ionicons name="hand-left" size={14} color="#FFF" />
-            <Text style={styles.holdingText}>
+            <Ionicons name="hand-left" size={14} color={isDark ? '#1E1B4B' : '#FFF'} />
+            <Text style={[styles.holdingText, { color: isDark ? '#1E1B4B' : '#FFF' }]}>
               Memegang: {selectedItem?.name}
             </Text>
           </View>
@@ -196,7 +196,13 @@ export default function VirtualLabSimulationScreen() {
           <TouchableOpacity 
             onPress={prevStep} 
             disabled={state.currentStepIndex === 0}
-            style={[styles.navBtnSecondary, { opacity: state.currentStepIndex === 0 ? 0.4 : 1 }]}
+            style={[
+              styles.navBtnSecondary, 
+              { 
+                opacity: state.currentStepIndex === 0 ? 0.4 : 1,
+                backgroundColor: isDark ? theme.surfaceElevated : 'transparent' 
+              }
+            ]}
           >
             <Text style={{ color: theme.textPrimary, fontWeight: '600' }}>Kembali</Text>
           </TouchableOpacity>
@@ -204,9 +210,20 @@ export default function VirtualLabSimulationScreen() {
           <TouchableOpacity 
             onPress={nextStep}
             disabled={!isNextEnabled}
-            style={[styles.navBtnPrimary, { backgroundColor: theme.primary, opacity: isNextEnabled ? 1 : 0.4 }]}
+            style={[
+              styles.navBtnPrimary, 
+              { 
+                backgroundColor: theme.primary, 
+                opacity: isNextEnabled ? 1 : 0.4 
+              }
+            ]}
           >
-            <Text style={styles.navBtnPrimaryText}>Lanjut</Text>
+            <Text style={[
+              styles.navBtnPrimaryText,
+              { color: isDark ? '#1E1B4B' : '#FFF' }
+            ]}>
+              Lanjut
+            </Text>
           </TouchableOpacity>
         </View>
       </View>

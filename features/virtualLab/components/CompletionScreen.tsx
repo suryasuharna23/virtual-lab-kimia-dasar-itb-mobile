@@ -1,18 +1,17 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Modal, Dimensions } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import Animated, { 
-  useAnimatedStyle, 
-  useSharedValue, 
-  withSpring, 
-  withDelay,
-  withSequence,
-  withTiming,
-  FadeInDown,
-  FadeIn
-} from 'react-native-reanimated';
-import { Text, Button } from '@/components/ui';
+import { Button, Text } from '@/components/ui';
 import { borderRadius, shadows } from '@/constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import React, { useEffect } from 'react';
+import { Dimensions, Modal, ScrollView, StyleSheet, View } from 'react-native';
+import Animated, {
+  FadeIn,
+  FadeInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withSpring,
+  withTiming
+} from 'react-native-reanimated';
 import { Practice } from '../data/types';
 
 const { width } = Dimensions.get('window');
@@ -126,7 +125,7 @@ export function CompletionScreen({ visible, practice, onReset, onClose, theme }:
           </ScrollView>
 
           <View style={[styles.footer, { borderTopColor: theme.border }]}>
-            <Button variant="secondary" onPress={onReset} style={styles.button}>
+            <Button onPress={onReset} style={styles.button}>
               Ulangi
             </Button>
             <Button onPress={onClose} style={styles.button}>

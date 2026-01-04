@@ -12,17 +12,26 @@ import {
   Platform,
   ScrollView,
   LayoutAnimation,
-  UIManager
+  UIManager,
+  ActivityIndicator
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import Animated, { FadeInDown } from 'react-native-reanimated'
+import * as DocumentPicker from 'expo-document-picker'
 import { useTheme } from '@/contexts/ThemeContext'
 import { Text, Card, Button, LoadingSpinner, Badge } from '@/components/ui'
 import { api } from '@/lib/api'
 import { endpoints } from '@/constants/api'
 import { colors, spacing, borderRadius } from '@/constants/theme'
-import type { Group } from '@/types' // Pastikan tipe data Group sudah ada
+import type { Group } from '@/types'
+
+interface SelectedFile {
+  uri: string;
+  name: string;
+  type: string;
+  size?: number;
+}
 
 // Enable LayoutAnimation
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -43,7 +52,9 @@ export default function AdminGroupScreen() {
   const [modalVisible, setModalVisible] = useState(false)
   const [editGroup, setEditGroup] = useState<Group | null>(null)
   const [name, setName] = useState('')
-  const [description, setDescription] = useState('') // Misal: Nama Asisten / Topik
+  const [description, setDescription] = useState('')
+  const [cohort, setCohort] = useState('')
+  const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null)
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('')
@@ -100,15 +111,66 @@ export default function AdminGroupScreen() {
   }, [groups, searchQuery, sortOrder]);
 
   // --- CRUD HANDLERS ---
+  const pickDocument = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: [
+          'application/pdf',
+          'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'application/vnd.ms-excel',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ],
+        copyToCacheDirectory: true,
+      })
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0]
+        setSelectedFile({
+          uri: asset.uri,
+          name: asset.name,
+          type: asset.mimeType || 'application/octet-stream',
+          size: asset.size,
+        })
+      }
+    } catch (e) {
+      console.error('Document picker error:', e)
+      Alert.alert('Error', 'Gagal memilih file')
+    }
+  }
+
+  const formatFileSize = (bytes?: number) => {
+    if (!bytes) return ''
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  }
+
   const handleSubmit = async () => {
     if (!name.trim()) {
       Alert.alert('Error', 'Nama kelompok wajib diisi')
       return
     }
+    if (!description.trim()) {
+      Alert.alert('Error', 'Deskripsi wajib diisi')
+      return
+    }
+    if (!cohort.trim()) {
+      Alert.alert('Error', 'Angkatan/Cohort wajib diisi')
+      return
+    }
+    if (!selectedFile) {
+      Alert.alert('Error', 'File pembagian kelompok wajib dipilih')
+      return
+    }
+
     setSubmitting(true)
     try {
-      const payload = { name, description }
-      const response = await api.post(endpoints.groups.list, payload)
+      const response = await api.uploadFile<Group>(
+        endpoints.groups.list,
+        { uri: selectedFile.uri, name: selectedFile.name, type: selectedFile.type },
+        { name, description, cohort, visibility: 'public' }
+      )
       
       if (response.success) {
         Alert.alert('Sukses', 'Kelompok berhasil dibuat')
@@ -117,19 +179,47 @@ export default function AdminGroupScreen() {
       } else {
         Alert.alert('Error', response.message || 'Gagal membuat kelompok')
       }
-    } catch (e) {
-      Alert.alert('Error', 'Terjadi kesalahan koneksi')
+    } catch (e: any) {
+      console.error('Submit error:', e)
+      Alert.alert('Error', e.message || 'Terjadi kesalahan koneksi')
     } finally {
       setSubmitting(false)
     }
   }
 
   const handleUpdate = async () => {
-    if (!name.trim()) return
+    if (!name.trim()) {
+      Alert.alert('Error', 'Nama kelompok wajib diisi')
+      return
+    }
+    if (!description.trim()) {
+      Alert.alert('Error', 'Deskripsi wajib diisi')
+      return
+    }
+    if (!cohort.trim()) {
+      Alert.alert('Error', 'Angkatan/Cohort wajib diisi')
+      return
+    }
+
     setSubmitting(true)
     try {
-      const payload = { name, description }
-      const response = await api.put(`${endpoints.groups.list}/${editGroup?.id}`, payload)
+      let response
+      
+      if (selectedFile) {
+        response = await api.uploadFile<Group>(
+          `${endpoints.groups.list}/${editGroup?.id}`,
+          { uri: selectedFile.uri, name: selectedFile.name, type: selectedFile.type },
+          { name, description, cohort, visibility: 'public' },
+          'PUT'
+        )
+      } else {
+        response = await api.put(`${endpoints.groups.list}/${editGroup?.id}`, {
+          name,
+          description,
+          cohort,
+          visibility: 'public'
+        })
+      }
       
       if (response.success) {
         Alert.alert('Sukses', 'Kelompok berhasil diupdate')
@@ -138,8 +228,9 @@ export default function AdminGroupScreen() {
       } else {
         Alert.alert('Error', response.message || 'Gagal update kelompok')
       }
-    } catch (e) {
-      Alert.alert('Error', 'Terjadi kesalahan koneksi')
+    } catch (e: any) {
+      console.error('Update error:', e)
+      Alert.alert('Error', e.message || 'Terjadi kesalahan koneksi')
     } finally {
       setSubmitting(false)
     }
@@ -172,6 +263,8 @@ export default function AdminGroupScreen() {
     setEditGroup(null)
     setName('')
     setDescription('')
+    setCohort('')
+    setSelectedFile(null)
     setModalVisible(true)
   }
 
@@ -179,6 +272,8 @@ export default function AdminGroupScreen() {
     setEditGroup(group)
     setName(group.name)
     setDescription(group.description || '')
+    setCohort(group.cohort || '')
+    setSelectedFile(null)
     setModalVisible(true)
   }
 
@@ -187,6 +282,8 @@ export default function AdminGroupScreen() {
     setEditGroup(null)
     setName('')
     setDescription('')
+    setCohort('')
+    setSelectedFile(null)
   }
 
   // --- RENDERERS ---
@@ -320,16 +417,6 @@ export default function AdminGroupScreen() {
               <Text variant="caption" style={{ color: theme.textSecondary, marginTop: 2 }}>
                 {item.description || 'Tidak ada deskripsi'}
               </Text>
-              
-              {/* Stats Row (Contoh: Jumlah Anggota) */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
-                 <View style={{flexDirection: 'row', alignItems: 'center', backgroundColor: theme.border + '50', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6}}>
-                    <Ionicons name="person" size={12} color={theme.textMuted} style={{marginRight: 4}}/>
-                    <Text style={{fontSize: 11, color: theme.textMuted, fontWeight: '600'}}>
-                       {item.members_count || 0} Anggota
-                    </Text>
-                 </View>
-              </View>
             </View>
         </View>
 
@@ -408,11 +495,11 @@ export default function AdminGroupScreen() {
               </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
               <View style={styles.formGroup}>
                 <Text style={[styles.label, {color: theme.textSecondary}]}>NAMA KELOMPOK</Text>
                 <TextInput
-                  placeholder="Contoh: Kelompok A1"
+                  placeholder="Contoh: Pembagian Kelompok Praktikum Kimia Dasar"
                   placeholderTextColor={theme.textMuted}
                   value={name}
                   onChangeText={setName}
@@ -421,9 +508,9 @@ export default function AdminGroupScreen() {
               </View>
               
               <View style={styles.formGroup}>
-                <Text style={[styles.label, {color: theme.textSecondary}]}>DESKRIPSI / ASISTEN</Text>
+                <Text style={[styles.label, {color: theme.textSecondary}]}>DESKRIPSI</Text>
                 <TextInput
-                  placeholder="Contoh: Asisten Kak Budi"
+                  placeholder="Contoh: Pembagian untuk semester ganjil 2024/2025"
                   placeholderTextColor={theme.textMuted}
                   value={description}
                   onChangeText={setDescription}
@@ -431,7 +518,70 @@ export default function AdminGroupScreen() {
                 />
               </View>
 
-              {/* Tombol Simpan dengan Fix Contrast */}
+              <View style={styles.formGroup}>
+                <Text style={[styles.label, {color: theme.textSecondary}]}>ANGKATAN / COHORT</Text>
+                <TextInput
+                  placeholder="Contoh: 2024"
+                  placeholderTextColor={theme.textMuted}
+                  value={cohort}
+                  onChangeText={setCohort}
+                  style={[styles.input, { borderColor: theme.border, color: theme.textPrimary, backgroundColor: theme.background }]}
+                />
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={[styles.label, {color: theme.textSecondary}]}>FILE PEMBAGIAN KELOMPOK</Text>
+                <TouchableOpacity
+                  onPress={pickDocument}
+                  disabled={submitting}
+                  style={[
+                    styles.filePickerButton,
+                    { 
+                      borderColor: theme.border, 
+                      backgroundColor: theme.background,
+                      opacity: submitting ? 0.6 : 1 
+                    }
+                  ]}
+                >
+                  <Ionicons name="document-attach" size={20} color={theme.primary} />
+                  <Text style={{ color: theme.primary, fontWeight: '600', marginLeft: 8 }}>
+                    {selectedFile ? 'Ganti File' : 'Pilih File (PDF/Excel/Word)'}
+                  </Text>
+                </TouchableOpacity>
+
+                {selectedFile && (
+                  <View style={[styles.selectedFileContainer, { backgroundColor: theme.background, borderColor: theme.border }]}>
+                    <Ionicons name="document" size={18} color={theme.primary} />
+                    <View style={{ flex: 1, marginLeft: 10 }}>
+                      <Text style={{ color: theme.textPrimary, fontSize: 13, fontWeight: '500' }} numberOfLines={1}>
+                        {selectedFile.name}
+                      </Text>
+                      {selectedFile.size && (
+                        <Text style={{ color: theme.textMuted, fontSize: 11 }}>
+                          {formatFileSize(selectedFile.size)}
+                        </Text>
+                      )}
+                    </View>
+                    <TouchableOpacity onPress={() => setSelectedFile(null)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                      <Ionicons name="close-circle" size={20} color={theme.textMuted} />
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {editGroup && !selectedFile && editGroup.storage_path && (
+                  <View style={[styles.selectedFileContainer, { backgroundColor: theme.background, borderColor: theme.border }]}>
+                    <Ionicons name="document-text" size={18} color={theme.success} />
+                    <View style={{ flex: 1, marginLeft: 10 }}>
+                      <Text style={{ color: theme.textPrimary, fontSize: 13, fontWeight: '500' }}>
+                        File sudah ada
+                      </Text>
+                      <Text style={{ color: theme.textMuted, fontSize: 11 }}>
+                        Pilih file baru untuk mengganti
+                      </Text>
+                    </View>
+                  </View>
+                )}
+              </View>
               <Button 
                 variant="primary" 
                 size="lg"
@@ -561,5 +711,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
+  },
+  filePickerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  selectedFileContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginTop: 12,
   },
 });

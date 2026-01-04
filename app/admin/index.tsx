@@ -382,15 +382,6 @@ export default function AdminAnnouncementScreen() {
               <Text style={{color: theme.textSecondary, fontSize: 13, marginTop: 6, lineHeight: 18}} numberOfLines={2}>
                  {item.content.replace(/<[^>]+>/g, '')}
               </Text>
-
-              {item.attachments && item.attachments.length > 0 && (
-                 <View style={{flexDirection: 'row', alignItems: 'center', marginTop: 8}}>
-                    <Ionicons name="attach" size={14} color={theme.primary} />
-                    <Text style={{fontSize: 11, color: theme.primary, fontWeight: '600', marginLeft: 4}}>
-                      {item.attachments.length} Lampiran
-                    </Text>
-                 </View>
-              )}
             </View>
         </View>
 

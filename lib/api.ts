@@ -113,6 +113,71 @@ class ApiClient {
     })
   }
 
+  async uploadFile<T>(
+    endpoint: string,
+    file: { uri: string; name: string; type: string },
+    additionalData?: Record<string, string>,
+    method: 'POST' | 'PUT' = 'POST'
+  ): Promise<ApiResponse<T>> {
+    const url = `${this.baseURL}${endpoint}`
+    const token = await this.getAuthToken()
+
+    const formData = new FormData()
+    formData.append('file', {
+      uri: file.uri,
+      name: file.name,
+      type: file.type,
+    } as any)
+
+    if (additionalData) {
+      Object.entries(additionalData).forEach(([key, value]) => {
+        formData.append(key, value)
+      })
+    }
+
+    const headers: Record<string, string> = {}
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
+    }
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers,
+        body: formData,
+      })
+
+      let data: ApiResponse<T>
+      const contentType = response.headers.get('content-type')
+
+      if (contentType && contentType.includes('application/json')) {
+        const text = await response.text()
+        data = text ? JSON.parse(text) : { data: null as T, success: true }
+      } else {
+        const text = await response.text()
+        data = {
+          data: null as T,
+          message: text || `HTTP error: ${response.status}`,
+          success: false,
+        }
+      }
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          await this.clearAuthToken()
+        }
+        throw new Error(data.message || `HTTP error: ${response.status}`)
+      }
+
+      return data
+    } catch (error) {
+      if (error instanceof TypeError && error.message.includes('Network')) {
+        throw new Error('Network error. Please check your internet connection.')
+      }
+      throw error
+    }
+  }
+
   async getWithQuery<T>(
     endpoint: string,
     params?: Record<string, string | number | boolean | undefined>

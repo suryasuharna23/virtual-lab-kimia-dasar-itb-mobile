@@ -8,7 +8,7 @@ import { Text, Card } from '@/components/ui';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 export default function AuthSelectionScreen() {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const router = useRouter();
 
   return (
@@ -33,29 +33,33 @@ export default function AuthSelectionScreen() {
             activeOpacity={0.85}
             onPress={() => router.replace('/auth/login')}
           >
-            <View style={styles.iconBadge}>
+            <View style={[styles.iconBadge, { backgroundColor: theme.borderLight }]}>
               <Ionicons name="person" size={28} color={theme.primary} />
             </View>
             <View style={{ flex: 1 }}>
               <Text variant="h4" style={{ color: theme.textPrimary, fontWeight: '800', marginBottom: 2 }}>Praktikan</Text>
               <Text style={{ color: theme.textSecondary, fontSize: 13, marginBottom: 2 }}>Akses fitur praktikum, nilai, pengumuman, dan virtual lab.</Text>
-              <View style={styles.badge}><Text style={styles.badgeText}>Mahasiswa</Text></View>
+              <View style={[styles.badge, { backgroundColor: theme.primarySoft }]}>
+                <Text style={[styles.badgeText, { color: isDark ? theme.primary : '#3730A3' }]}>Mahasiswa</Text>
+              </View>
             </View>
             <Ionicons name="chevron-forward" size={22} color={theme.textSecondary} />
           </TouchableOpacity>
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: theme.border }]} />
           <TouchableOpacity
-            style={[styles.option, { backgroundColor: '#FEF3C7' }]}
+            style={[styles.option, { backgroundColor: theme.accentSoft }]}
             activeOpacity={0.85}
             onPress={() => router.replace('/auth/login-admin' as any)}
           >
-            <View style={[styles.iconBadge, { backgroundColor: '#FEF3C7' }]}>
-              <Ionicons name="shield-checkmark" size={28} color={'#F59E0B'} />
+            <View style={[styles.iconBadge, { backgroundColor: theme.accentSoft }]}>
+              <Ionicons name="shield-checkmark" size={28} color={theme.accent} />
             </View>
             <View style={{ flex: 1 }}>
               <Text variant="h4" style={{ color: theme.textPrimary, fontWeight: '800', marginBottom: 2 }}>Asisten/Admin</Text>
               <Text style={{ color: theme.textSecondary, fontSize: 13, marginBottom: 2 }}>Akses dashboard asisten/admin, kelola data, dan monitoring.</Text>
-              <View style={[styles.badge, { backgroundColor: '#FEF3C7' }]}><Text style={[styles.badgeText, { color: '#B45309' }]}>Staff</Text></View>
+              <View style={[styles.badge, { backgroundColor: theme.accentSoft }]}>
+                <Text style={[styles.badgeText, { color: isDark ? theme.accentLight : '#B45309' }]}>Staff</Text>
+              </View>
             </View>
             <Ionicons name="chevron-forward" size={22} color={theme.textSecondary} />
           </TouchableOpacity>
@@ -99,14 +103,12 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 16,
-    backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 8,
   },
   badge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#E0E7FF',
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -115,12 +117,10 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#3730A3',
     letterSpacing: 0.2,
   },
   divider: {
     height: 1,
-    backgroundColor: '#E5E7EB',
     marginHorizontal: 18,
     opacity: 0.5,
   },

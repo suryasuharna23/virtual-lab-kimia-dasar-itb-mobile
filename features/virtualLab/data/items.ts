@@ -74,7 +74,7 @@ export const labItems: Record<string, LabItem> = {
     icon: 'water-outline',
     kind: 'chemical',
     phase: 'solution',
-    color: '#E0E7FF', // Light blue-ish (basa)
+    color: '#93C5FD',
     description: 'Larutan natrium hidroksida (basa kuat)',
   },
   hcl: {

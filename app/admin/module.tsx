@@ -21,7 +21,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated'
 import { useTheme } from '@/contexts/ThemeContext'
 import { Text, Card, Button, LoadingSpinner, Badge } from '@/components/ui'
 import { api } from '@/lib/api'
-import { endpoints, API_BASE_URL } from '@/constants/api'
+import { endpoints } from '@/constants/api'
 import { downloadModule } from '@/lib/download'
 import { colors, spacing, borderRadius } from '@/constants/theme'
 import type { Module } from '@/types'
@@ -126,37 +126,39 @@ export default function AdminModuleScreen() {
       Alert.alert('Error', 'Judul, deskripsi, dan file wajib diisi')
       return
     }
+    
+    if (!('assets' in file) || !file.assets || file.assets.length === 0) {
+      Alert.alert('Error', 'File tidak valid, silakan pilih ulang')
+      return
+    }
+    
     setUploading(true)
     try {
-      const formData = new FormData()
-      formData.append('title', title)
-      formData.append('description', description)
-      formData.append('visibility', visibility)
-      if (file && 'assets' in file && file.assets && file.assets.length > 0) {
-        const pickedFile = file.assets[0]
-        formData.append('file', {
+      const pickedFile = file.assets[0]
+      
+      const response = await api.uploadFile<Module>(
+        endpoints.modules.list,
+        {
           uri: pickedFile.uri,
           name: pickedFile.name,
           type: pickedFile.mimeType || 'application/pdf',
-        } as unknown as Blob)
-      }
+        },
+        {
+          title,
+          description,
+          visibility,
+        }
+      )
 
-      const response = await fetch(`${API_BASE_URL}${endpoints.modules.list}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${await api.getAuthToken?.()}` },
-        body: formData,
-      })
-      const json = await response.json()
-
-      if (json.success) {
+      if (response.success) {
         Alert.alert('Sukses', 'Modul berhasil diupload')
         closeModal()
         fetchModules()
       } else {
-        Alert.alert('Error', json.message || 'Gagal upload modul')
+        Alert.alert('Error', response.message || 'Gagal upload modul')
       }
-    } catch (e) {
-      Alert.alert('Error', 'Gagal upload modul')
+    } catch (e: any) {
+      Alert.alert('Error', e.message || 'Gagal upload modul')
     } finally {
       setUploading(false)
     }

@@ -33,6 +33,7 @@ export const endpoints = {
 
   files: {
     list: '/api/files',
+    upload: '/api/files',
     get: (id: string | number) => `/api/files/${id}`,
     verifyPassword: (id: string | number) => `/api/files/${id}/verify-password`,
     download: (id: string | number) => `/api/files/${id}/download`,

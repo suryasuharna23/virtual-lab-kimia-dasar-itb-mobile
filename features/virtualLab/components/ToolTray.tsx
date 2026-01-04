@@ -37,6 +37,8 @@ export function ToolTray({ availableItemIds, selectedItemId, onSelectItem, theme
 
   const hasTools = tools.length > 0;
   const hasChemicals = chemicals.length > 0;
+  
+  const textOnPrimary = theme.primary === '#E8E6F2' ? '#1E1B4B' : '#FFF';
 
   React.useEffect(() => {
     if (activeTab === 'chemicals' && !hasChemicals && hasTools) setActiveTab('tools');
@@ -52,8 +54,8 @@ export function ToolTray({ availableItemIds, selectedItemId, onSelectItem, theme
           entering={FadeIn.duration(300)}
           style={[styles.holdingBadge, { backgroundColor: theme.primary }]}
         >
-          <Ionicons name="hand-left" size={14} color="#FFF" />
-          <Text style={styles.holdingText}>Dalam Genggaman</Text>
+          <Ionicons name="hand-left" size={14} color={textOnPrimary} />
+          <Text style={[styles.holdingText, { color: textOnPrimary }]}>Dalam Genggaman</Text>
         </Animated.View>
       )}
 
@@ -109,8 +111,10 @@ export function ToolTray({ availableItemIds, selectedItemId, onSelectItem, theme
 function TabButton({ active, label, icon, count, onPress, theme, disabled }: any) {
   if (disabled) return null;
   
+  const textOnPrimary = theme.primary === '#E8E6F2' ? '#1E1B4B' : '#FFF';
+  
   return (
-    <TouchableOpacity 
+    <TouchableOpacity  
       onPress={onPress} 
       style={[
         styles.tab, 
@@ -130,7 +134,7 @@ function TabButton({ active, label, icon, count, onPress, theme, disabled }: any
         {label}
       </Text>
       <View style={[styles.badge, { backgroundColor: active ? theme.primary : theme.surfaceElevated }]}>
-        <Text style={[styles.badgeText, { color: active ? '#FFF' : theme.textSecondary }]}>
+        <Text style={[styles.badgeText, { color: active ? textOnPrimary : theme.textSecondary }]}>
           {count}
         </Text>
       </View>
@@ -140,6 +144,7 @@ function TabButton({ active, label, icon, count, onPress, theme, disabled }: any
 
 function ItemTile({ item, isSelected, onPress, index, theme }: any) {
   const scale = useSharedValue(1);
+  const textOnPrimary = theme.primary === '#E8E6F2' ? '#1E1B4B' : '#FFF';
   
   React.useEffect(() => {
     if (isSelected) {
@@ -181,8 +186,8 @@ function ItemTile({ item, isSelected, onPress, index, theme }: any) {
             )}
             
             {isSelected && (
-              <View style={[styles.checkBadge, { backgroundColor: theme.primary }]}>
-                <Ionicons name="checkmark" size={10} color="#FFF" />
+              <View style={[styles.checkBadge, { backgroundColor: theme.primary, borderColor: theme.primary === '#E8E6F2' ? '#1E1B4B' : '#FFF' }]}>
+                <Ionicons name="checkmark" size={10} color={textOnPrimary} />
               </View>
             )}
           </View>

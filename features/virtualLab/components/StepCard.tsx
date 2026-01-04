@@ -10,6 +10,7 @@ import Animated, {
 import { Text, Input } from '@/components/ui';
 import { PracticeStep } from '../data/types';
 import { borderRadius, shadows } from '@/constants/theme';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface StepCardProps {
   step: PracticeStep;
@@ -21,6 +22,7 @@ interface StepCardProps {
 export function StepCard({ step, inputs, onInputChange, theme }: StepCardProps) {
   const [completedSubtasks, setCompletedSubtasks] = useState<Record<string, boolean>>({});
   const [hintLevel, setHintLevel] = useState(0);
+  const { isDark } = useTheme();
 
   const toggleSubtask = (id: string) => {
     setCompletedSubtasks(prev => ({ ...prev, [id]: !prev[id] }));
@@ -38,7 +40,7 @@ export function StepCard({ step, inputs, onInputChange, theme }: StepCardProps) 
     >
       <View style={styles.header}>
         <View style={[styles.stepBadge, { backgroundColor: theme.primary }]}>
-          <Text style={styles.stepBadgeText}>LANGKAH UTAMA</Text>
+          <Text style={[styles.stepBadgeText, { color: isDark ? '#1E1B4B' : '#FFF' }]}>LANGKAH UTAMA</Text>
         </View>
         <Text variant="h3" style={[styles.title, { color: theme.textPrimary }]}>
           {step.title}

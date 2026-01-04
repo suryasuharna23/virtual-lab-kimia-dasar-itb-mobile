@@ -171,14 +171,6 @@ export default function VirtualLabListScreen() {
 
               <View style={styles.modalActions}>
                 <Button 
-                  variant="secondary" 
-                  style={{ flex: 1, alignItems: 'center' }} // pastikan tombolnya juga rata tengah
-                  onPress={() => setSelectedPractice(null)}
-                  textColor="#FFF"
-                >
-                  Mode Sandbox
-                </Button>
-                <Button 
                   style={{ flex: 1, alignItems: 'center' }}
                   onPress={() => {
                     const id = selectedPractice.id;
@@ -187,7 +179,7 @@ export default function VirtualLabListScreen() {
                   }}
                   textColor={isDark ? '#000' : undefined}
                 >
-                  Mulai Panduan
+                  Mulai Praktikum
                 </Button>
               </View>
             </Animated.View>
