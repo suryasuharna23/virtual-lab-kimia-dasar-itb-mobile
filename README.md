@@ -185,6 +185,18 @@ cd android && ./gradlew assembleRelease
 Aplikasi menggunakan backend API yang dikonfigurasi pada `app.json`:
 - **API URL**: `https://backend-labkidas-rn.vercel.app`
 
+## 🧑‍💻 Dummy Akun Testing
+
+Gunakan akun berikut untuk login ke aplikasi selama pengujian:
+
+**Akun Mahasiswa**
+- Email: pepeng@mahasiswa.com
+- Password: #Pepeng123!
+
+**Akun Admin**
+- Email: adminbaru@labkimia.itb.ac.id
+- Password: AdminBaru123!
+
 ## 🎓 Credits
 **Laboratorium Kimia Dasar**  
 Institut Teknologi Bandung
