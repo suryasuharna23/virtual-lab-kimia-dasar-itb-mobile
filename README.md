@@ -1,6 +1,6 @@
 # 🧪 Lab Kimia Dasar ITB
 
-Aplikasi mobile resmi untuk menunjang kegiatan praktikum Kimia Dasar di **Institut Teknologi Bandung**. Membantu mahasiswa mengakses materi praktikum, jadwal, pengumuman, dan simulasi laboratorium virtual.
+Aplikasi mobile untuk menunjang kegiatan praktikum Kimia Dasar di **Institut Teknologi Bandung**. Membantu mahasiswa mengakses materi praktikum, jadwal, pengumuman, dan simulasi laboratorium virtual.
 
 ## 📱 Tentang Aplikasi
 
