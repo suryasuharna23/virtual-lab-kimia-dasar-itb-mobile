@@ -196,7 +196,3 @@ Gunakan akun berikut untuk login ke aplikasi selama pengujian:
 **Akun Admin**
 - Email: adminbaru@labkimia.itb.ac.id
 - Password: AdminBaru123!
-
-## 🎓 Credits
-**Laboratorium Kimia Dasar**  
-Institut Teknologi Bandung
